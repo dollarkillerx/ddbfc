@@ -10,6 +10,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"sync"
 	"testing"
 	"time"
 )
@@ -32,4 +33,61 @@ func TestPing(t *testing.T) {
 
 		log.Println(ns)
 	}
+}
+
+func TestChannel(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	bools := make(chan bool, 0)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case _, ok := <-bools:
+				if !ok {
+					log.Println("00101")
+					return
+				}
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		time.Sleep(3 * time.Second)
+		close(bools)
+	}()
+
+	wg.Wait()
+}
+
+func TestChannel2(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	bools := make(chan bool, 3)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case o, ok := <-bools:
+				time.Sleep(time.Second)
+				if ok {
+					log.Println(o)
+				} else {
+					log.Println("00101")
+					return
+				}
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		bools <- true
+		bools <- true
+		bools <- true
+		close(bools)
+	}()
+
+	wg.Wait()
 }

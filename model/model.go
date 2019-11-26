@@ -28,9 +28,9 @@ type baseModel struct {
 
 func init() {
 	BaseModel = &baseModel{
-		TimeOut:     200 * time.Millisecond,
-		TryNum:      3,
-		Max:         300,
+		TimeOut:     400 * time.Millisecond,
+		TryNum:      5,
+		Max:         200,
 		DomainQueue: &queue.Queue{},
 		DomainEnd:   make(chan bool, 0),
 	}

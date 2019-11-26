@@ -10,6 +10,7 @@ import (
 	"ddbf/model"
 	"errors"
 	"github.com/urfave/cli"
+	"log"
 	"strings"
 	"time"
 )
@@ -19,7 +20,7 @@ var (
 )
 
 // 绑定相关参数 并初始化系统
-func scan(ctx *cli.Context) error {
+func ScanIc(ctx *cli.Context) error {
 	if ctx.IsSet("domain") {
 		domain := ctx.String("domain")
 		// domain validate
@@ -49,12 +50,14 @@ func scan(ctx *cli.Context) error {
 		model.BaseModel.TryNum = tryName
 	}
 
-	if ctx.IsSet("max_concurrent") {
-		maxConcurrent := ctx.Int("max_concurrent")
+	if ctx.IsSet("max") {
+		maxConcurrent := ctx.Int("max")
 		if maxConcurrent <= 0 {
 			return d400
 		}
+		log.Println(maxConcurrent)
 		model.BaseModel.Max = maxConcurrent
+		log.Println(model.BaseModel.Max)
 	}
 
 	// 启动初始化程序

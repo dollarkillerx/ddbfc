@@ -11,3 +11,30 @@ work完成任务 向master返回   master向执行任务中表删除结束任务
 
 ### 这是Cli 本地并发版
 字典放入dic目录下 会自动检测 (如果没有会使用基础字典)
+
+``` 
+dollarkiller@dollarkiller-virtual-machine:~/Github/ddbfc$ ./ddbfc -h
+NAME:
+   DdbFC - Distributed DNS brute force cracking CLi
+
+USAGE:
+   ddbfc [global options] command [command options] [arguments...]
+
+VERSION:
+   0.1
+
+AUTHOR:
+   DollarKiller <adapawang@gmail.com>
+
+COMMANDS:
+   scan     start to crack weak password
+   help, h  Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --domain value, -d value   domain
+   --timeout value, -t value  Single DNS query timeout Millisecond (default: 400)
+   --tryNum value, -r value   Number of attempts (default: 3)
+   --max value, -m value      Maximum number of concurrency (default: 200)
+   --help, -h                 show help
+   --version, -v              print the version
+```

@@ -10,14 +10,14 @@ import "github.com/urfave/cli"
 
 var Scan = cli.Command{
 	Name:        "scan",
-	Usage:       "cmd ...",
-	Description: "cmd ...",
-	Action:      scan,
+	Usage:       "start to crack weak password",
+	Description: "start to crack weak password",
+	Action:      ScanIc,
 	Flags: []cli.Flag{
 		stringFlag("domain, d", "", "domain"),
-		intFlag("timeout, t", 3, "Single DNS query timeout Millisecond"),
+		intFlag("timeout, t", 400, "Single DNS query timeout Millisecond"),
 		intFlag("tryNum, r", 3, "Number of attempts"),
-		intFlag("max_concurrent, m", 300, "Maximum number of concurrency"),
+		intFlag("max, m", 200, "Maximum number of concurrency"),
 	},
 }
 

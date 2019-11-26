@@ -24,10 +24,9 @@ func TestDnsParsing(t *testing.T) {
 	}
 
 	for _, domain := range domains {
-		err := DnsParsing(domain, time.Millisecond*200, 3)
+		err := DnsParsing(domain, time.Millisecond*400, 3)
 		if err != nil {
 			log.Println(domain)
-			log.Println(err)
 			continue
 		}
 	}

@@ -11,7 +11,9 @@ import (
 	"ddbf/utils"
 	"io/ioutil"
 	"log"
+	"strings"
 	"sync"
+	"time"
 )
 
 // 相关基础定义
@@ -69,6 +71,9 @@ func (e *Engine) defaultDic() {
 	}
 }
 
+var mcmu sync.Mutex
+var mc = 0
+
 // 开启爆破任务
 func (e *Engine) start() {
 	len := model.BaseModel.Dic.Len()
@@ -82,6 +87,19 @@ func (e *Engine) start() {
 	// 打印日志
 	go e.printLog(wg)
 
+	go func() {
+		for {
+			select {
+			case <-time.After(time.Second):
+				mcmu.Lock()
+				if mc >= model.BaseModel.Max {
+					close(model.BaseModel.DomainEnd)
+				}
+				mcmu.Unlock()
+			}
+		}
+	}()
+
 	// 暴力破解
 	for i := 0; i < model.BaseModel.Max; i++ {
 		go e.task(wg, bus)
@@ -93,7 +111,10 @@ func (e *Engine) start() {
 func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 	defer func() {
 		wg.Done()
-		close(model.BaseModel.DomainEnd)
+
+		mcmu.Lock()
+		mc++
+		mcmu.Unlock()
 	}()
 	for {
 		select {
@@ -113,13 +134,15 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 }
 
 // 初始化chan
-func (e *Engine) initChan(wg *sync.WaitGroup, bug chan string) {
+func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 	defer wg.Done()
+	bus <- model.BaseModel.Domain
 	for k := range model.BaseModel.Dic {
-		domain := k + "." + model.BaseModel.Domain
-		bug <- domain
+		domain := strings.TrimSpace(k) + "." + strings.TrimSpace(model.BaseModel.Domain)
+		//log.Println(domain)
+		bus <- domain
 	}
-	close(bug)
+	close(bus)
 }
 
 // 打印日志

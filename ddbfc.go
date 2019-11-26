@@ -24,6 +24,7 @@ func main() {
 	app.Commands = []cli.Command{cmd.Scan}
 	app.Flags = append(app.Flags, cmd.Scan.Flags...)
 
+	app.Action = cmd.ScanIc
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatalln(err)

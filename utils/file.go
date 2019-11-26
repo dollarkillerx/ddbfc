@@ -96,7 +96,7 @@ func LoopDir(dir string) (set.Set, error) {
 		if file.IsDir() {
 			continue
 		}
-		sets, e := ReadRowToSet(file.Name())
+		sets, e := ReadRowToSet("dic/" + file.Name())
 		if e != nil {
 			continue
 		}
