@@ -17,6 +17,7 @@ var Scan = cli.Command{
 		stringFlag("domain, d", "", "domain"),
 		intFlag("timeout, t", 3, "Single DNS query timeout Millisecond"),
 		intFlag("tryNum, r", 3, "Number of attempts"),
+		intFlag("max_concurrent, m", 300, "Maximum number of concurrency"),
 	},
 }
 

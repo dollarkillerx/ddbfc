@@ -35,7 +35,7 @@ func scan(ctx *cli.Context) error {
 
 	if ctx.IsSet("timeout") {
 		timeoutInt := ctx.Int("timeout")
-		if timeoutInt == 0 {
+		if timeoutInt <= 0 {
 			return d400
 		}
 		model.BaseModel.TimeOut = time.Duration(timeoutInt) * time.Millisecond
@@ -43,10 +43,22 @@ func scan(ctx *cli.Context) error {
 
 	if ctx.IsSet("tryName") {
 		tryName := ctx.Int("tryName")
-		if tryName == 0 {
+		if tryName <= 0 {
 			return d400
 		}
 		model.BaseModel.TryNum = tryName
 	}
+
+	if ctx.IsSet("max_concurrent") {
+		maxConcurrent := ctx.Int("max_concurrent")
+		if maxConcurrent <= 0 {
+			return d400
+		}
+		model.BaseModel.Max = maxConcurrent
+	}
+
+	// 启动初始化程序
+	EngineInit()
+
 	return nil
 }

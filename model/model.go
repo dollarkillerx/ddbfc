@@ -19,11 +19,13 @@ type baseModel struct {
 	Dic     set.Set       // 字典
 	TimeOut time.Duration // 查询超时
 	TryNum  int           // 尝试次数
+	Max     int           // 最大并发数量
 }
 
 func init() {
 	BaseModel = &baseModel{
 		TimeOut: 200 * time.Millisecond,
 		TryNum:  3,
+		Max:     300,
 	}
 }
