@@ -9,6 +9,7 @@ package main
 import (
 	"ddbf/cmd"
 	"github.com/urfave/cli"
+	"log"
 	"os"
 )
 
@@ -23,5 +24,9 @@ func main() {
 	app.Commands = []cli.Command{cmd.Scan}
 	app.Flags = append(app.Flags, cmd.Scan.Flags...)
 
-	app.Run(os.Args)
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 }

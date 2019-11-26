@@ -7,6 +7,7 @@
 package model
 
 import (
+	"ddbf/utils/queue"
 	"time"
 
 	"ddbf/utils/set"
@@ -20,12 +21,17 @@ type baseModel struct {
 	TimeOut time.Duration // 查询超时
 	TryNum  int           // 尝试次数
 	Max     int           // 最大并发数量
+
+	DomainQueue *queue.Queue
+	DomainEnd   chan bool
 }
 
 func init() {
 	BaseModel = &baseModel{
-		TimeOut: 200 * time.Millisecond,
-		TryNum:  3,
-		Max:     300,
+		TimeOut:     200 * time.Millisecond,
+		TryNum:      3,
+		Max:         300,
+		DomainQueue: &queue.Queue{},
+		DomainEnd:   make(chan bool, 0),
 	}
 }
