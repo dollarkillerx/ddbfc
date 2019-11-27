@@ -122,6 +122,9 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 			if ok {
 				err := utils.DnsParsing(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
 				if err != nil {
+					if domain == "www.dollarkiller.com" || domain == "translate.dollarkiller.com" {
+						log.Println(err)
+					}
 					continue
 				}
 				// 如果可行 写入到domain中

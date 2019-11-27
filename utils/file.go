@@ -15,6 +15,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 )
@@ -102,6 +103,9 @@ func LoopDir(dir string) (set.Set, error) {
 		}
 		out.InsertMany(sets...)
 	}
+	defer func() {
+		log.Println("字典total: ",out.Len())
+	}()
 	return out, nil
 }
 

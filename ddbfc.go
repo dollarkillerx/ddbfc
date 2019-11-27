@@ -21,7 +21,6 @@ func main() {
 	app.Version = "0.1"
 	app.Usage = "Distributed DNS brute force cracking CLi"
 
-	app.Commands = []cli.Command{cmd.Scan}
 	app.Flags = append(app.Flags, cmd.Scan.Flags...)
 
 	app.Action = cmd.ScanIc
