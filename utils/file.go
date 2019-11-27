@@ -104,7 +104,7 @@ func LoopDir(dir string) (set.Set, error) {
 		out.InsertMany(sets...)
 	}
 	defer func() {
-		log.Println("字典total: ",out.Len())
+		log.Println("字典total: ", out.Len())
 	}()
 	return out, nil
 }

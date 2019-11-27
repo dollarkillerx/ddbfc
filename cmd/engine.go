@@ -71,11 +71,15 @@ func (e *Engine) defaultDic() {
 	}
 }
 
+// 一些计数器
 var mcmu sync.Mutex
 var mc = 0
+var okmu sync.Mutex
+var oktotal = 0
 
 // 开启爆破任务
 func (e *Engine) start() {
+	t := time.Now() // 计时器
 	len := model.BaseModel.Dic.Len()
 	bus := make(chan string, len)
 	wg := &sync.WaitGroup{}
@@ -85,20 +89,7 @@ func (e *Engine) start() {
 	go e.initChan(wg, bus)
 
 	// 打印日志
-	go e.printLog(wg)
-
-	go func() {
-		for {
-			select {
-			case <-time.After(time.Second):
-				mcmu.Lock()
-				if mc >= model.BaseModel.Max {
-					close(model.BaseModel.DomainEnd)
-				}
-				mcmu.Unlock()
-			}
-		}
-	}()
+	go e.printLog(wg, t, len)
 
 	// 暴力破解
 	for i := 0; i < model.BaseModel.Max; i++ {
@@ -112,6 +103,7 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 	defer func() {
 		wg.Done()
 
+		// 这个告诉任务
 		mcmu.Lock()
 		mc++
 		mcmu.Unlock()
@@ -120,11 +112,11 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 		select {
 		case domain, ok := <-bug:
 			if ok {
+				okmu.Lock()
+				oktotal++
+				okmu.Unlock()
 				err := utils.DnsParsing(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
 				if err != nil {
-					if domain == "www.dollarkiller.com" || domain == "translate.dollarkiller.com" {
-						log.Println(err)
-					}
 					continue
 				}
 				// 如果可行 写入到domain中
@@ -149,8 +141,39 @@ func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 }
 
 // 打印日志
-func (e *Engine) printLog(wg *sync.WaitGroup) {
+func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int) {
 	defer wg.Done()
+	go func() {
+		for {
+			select {
+			case <-time.After(time.Second * 10):
+				log.Println("===========================")
+				okmu.Lock()
+				log.Println("已完成任务: ", oktotal)
+				okmu.Unlock()
+				log.Println("总任务数: ", len)
+				log.Println("===========================")
+			}
+		}
+	}()
+	go func() {
+		for {
+			select {
+			case <-time.After(time.Second):
+				mcmu.Lock()
+				if mc >= model.BaseModel.Max {
+					// 程序完结
+					time.Sleep(time.Millisecond * 200)
+					log.Println(">>>>>>>>>>>>程序完结<<<<<<<<<<<<<<")
+					log.Println("字典总长度: ", len)
+					log.Println("总耗时: ", time.Since(tic))
+					log.Println(">>>>>>>>>>>>程序完结End<<<<<<<<<<<<<<")
+					close(model.BaseModel.DomainEnd)
+				}
+				mcmu.Unlock()
+			}
+		}
+	}()
 	for {
 		select {
 		case <-model.BaseModel.DomainEnd:
