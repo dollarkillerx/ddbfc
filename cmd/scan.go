@@ -10,9 +10,7 @@ import (
 	"ddbf/model"
 	"errors"
 	"github.com/urfave/cli"
-	"log"
 	"strings"
-	"time"
 )
 
 var (
@@ -39,7 +37,7 @@ func ScanIc(ctx *cli.Context) error {
 		if timeoutInt <= 0 {
 			return d400
 		}
-		model.BaseModel.TimeOut = time.Duration(timeoutInt) * time.Millisecond
+		model.BaseModel.TimeOut = timeoutInt
 	}
 
 	if ctx.IsSet("tryName") {
@@ -55,9 +53,9 @@ func ScanIc(ctx *cli.Context) error {
 		if maxConcurrent <= 0 {
 			return d400
 		}
-		log.Println(maxConcurrent)
+		//log.Println(maxConcurrent)
 		model.BaseModel.Max = maxConcurrent
-		log.Println(model.BaseModel.Max)
+		//log.Println(model.BaseModel.Max)
 	}
 
 	// 启动初始化程序

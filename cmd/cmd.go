@@ -6,7 +6,10 @@
  */
 package cmd
 
-import "github.com/urfave/cli"
+import (
+	"ddbf/model"
+	"github.com/urfave/cli"
+)
 
 var Scan = cli.Command{
 	Name:        "scan",
@@ -15,9 +18,27 @@ var Scan = cli.Command{
 	Action:      ScanIc,
 	Flags: []cli.Flag{
 		stringFlag("domain, d", "", "domain"),
-		intFlag("timeout, t", 400, "Single DNS query timeout Millisecond"),
-		intFlag("tryNum, r", 3, "Number of attempts"),
-		intFlag("max, m", 200, "Maximum number of concurrency"),
+		//intFlag("timeout, t", 400, "Single DNS query timeout Millisecond"),
+		//intFlag("tryNum, r", 3, "Number of attempts"),
+		//intFlag("max, m", 200, "Maximum number of concurrency"),
+		cli.IntFlag{
+			Name:        "max, m",
+			Value:       200,
+			Usage:       "Maximum number of concurrency",
+			Destination: &model.BaseModel.Max,
+		},
+		cli.IntFlag{
+			Name:        "tryNum, r",
+			Value:       3,
+			Usage:       "Number of attempts",
+			Destination: &model.BaseModel.TryNum,
+		},
+		cli.IntFlag{
+			Name:        "timeout, t",
+			Value:       300,
+			Usage:       "Single DNS query timeout Millisecond",
+			Destination: &model.BaseModel.TimeOut,
+		},
 	},
 }
 

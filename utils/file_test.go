@@ -22,3 +22,7 @@ func TestReadRowToSet(t *testing.T) {
 		fmt.Println(v)
 	}
 }
+
+func TestReadRowFile(t *testing.T) {
+	ReadRowFile("file.go")
+}

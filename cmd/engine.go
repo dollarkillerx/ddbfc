@@ -33,7 +33,11 @@ func EngineInit() {
 
 func (e *Engine) Run() {
 	e.initDic() // 初始化字典
-	e.start()   // 开启爆破任务
+	log.Println("[200 OK] 字典初始化完毕")
+	log.Println("[200 OK] 进入暴力破解周期")
+	log.Println("当前系统并发数: ", model.BaseModel.Max)
+	log.Println("当前系统尝试次数: ", model.BaseModel.TryNum)
+	e.start() // 开启爆破任务
 }
 
 // 初始化字典
@@ -89,7 +93,7 @@ func (e *Engine) start() {
 	go e.initChan(wg, bus)
 
 	// 打印日志
-	go e.printLog(wg, t, len)
+	go e.printLog(wg, t, len, bus)
 
 	// 暴力破解
 	for i := 0; i < model.BaseModel.Max; i++ {
@@ -112,13 +116,21 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 		select {
 		case domain, ok := <-bug:
 			if ok {
+				err := utils.DnsParsing2(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
+				if err != nil {
+					// 如果超时就回写
+					if err == utils.TimeOut {
+						bug <- domain
+						continue
+					}
+					okmu.Lock()
+					oktotal++
+					okmu.Unlock()
+					continue
+				}
 				okmu.Lock()
 				oktotal++
 				okmu.Unlock()
-				err := utils.DnsParsing(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
-				if err != nil {
-					continue
-				}
 				// 如果可行 写入到domain中
 				model.BaseModel.DomainQueue.Append(domain)
 			} else {
@@ -137,17 +149,20 @@ func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 		//log.Println(domain)
 		bus <- domain
 	}
-	close(bus)
+	//close(bus)
 }
 
 // 打印日志
-func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int) {
+func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan string) {
 	defer wg.Done()
 	go func() {
 		for {
 			select {
 			case <-time.After(time.Second * 10):
 				log.Println("===========================")
+				if oktotal >= len {
+					close(bus)
+				}
 				okmu.Lock()
 				log.Println("已完成任务: ", oktotal)
 				okmu.Unlock()
