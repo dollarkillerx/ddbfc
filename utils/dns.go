@@ -12,9 +12,7 @@ import (
 	"errors"
 	"github.com/dollarkillerx/easyutils/clog"
 	"github.com/miekg/dns"
-	"log"
 	"net"
-	"strings"
 	"time"
 )
 
@@ -22,25 +20,18 @@ import (
 // @param 域名
 // @param 超时时间
 // @param 尝试次数
-func DnsParsing(domain string, timeout time.Duration, tryNum int) error {
+func DnsParsing(domain string, timeout int, tryNum int) error {
 	var err error
 	var ips []net.IP
 	for i := 0; i < tryNum; i++ {
-		dns := DnsPool.GetDns()
-		defer func() {
-			log.Println(domain)
-			err := DnsPool.ReleaseDns(dns)
-			if err != nil {
-				panic(err)
-			}
-		}()
-
-		if domain == "dollarkiller.com" {
-			log.Println("进入到这里了")
-		}
+		dns := GetDns()
 		ips, err = dns.LookupHost(domain)
 		if err == nil && len(ips) != 0 {
 			return nil
+		} else if err != nil {
+			if checkTimeOut(err) {
+				return TimeOut
+			}
 		}
 	}
 	if err == nil {
@@ -244,7 +235,11 @@ func isPanDNS(domain string, response []dns.RR) bool {
 }
 
 func checkTimeOut(err error) bool {
-	if index := strings.Index(err.Error(), "timeout"); index != -1 {
+	//if index := strings.Index(err.Error(), "timeout"); index != -1 {
+	//	return true
+	//}
+	//return false
+	if err.Error() != "NXDOMAIN" {
 		return true
 	}
 	return false

@@ -116,7 +116,7 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 		select {
 		case domain, ok := <-bug:
 			if ok {
-				err := utils.DnsParsing2(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
+				err := utils.DnsParsing(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
 				if err != nil {
 					// 如果超时就回写
 					if err == utils.TimeOut {

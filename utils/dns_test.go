@@ -8,6 +8,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/bogdanovich/dns_resolver"
 	"github.com/dollarkillerx/easyutils/clog"
 	"github.com/miekg/dns"
 	"log"
@@ -27,9 +28,10 @@ func TestDnsParsing(t *testing.T) {
 	}
 
 	for _, domain := range domains {
-		err := DnsParsing(domain, time.Millisecond*400, 3)
+		err := DnsParsing(domain, 1, 3)
 		if err != nil {
 			log.Println("err:  ", domain)
+			log.Println(err)
 			continue
 		}
 	}
@@ -103,4 +105,14 @@ func TestTimeOUte(t *testing.T) {
 	if time.Now().After(add) || time.Now().Equal(add) {
 		log.Println("time out")
 	}
+}
+
+func TestNewDns(t *testing.T) {
+	resolver := dns_resolver.New([]string{"208.67.222.222"})
+	ips, e := resolver.LookupHost("ns.worldlink.com")
+	if e != nil {
+		log.Println(e)
+		return
+	}
+	log.Println(ips)
 }

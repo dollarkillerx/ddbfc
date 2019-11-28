@@ -22,12 +22,12 @@ var dnsList = []string{
 	"8.8.4.4",
 	"9.9.9.9",
 	"9.9.9.10",
-	"208.67.222.222",
-	"208.67.220.220",
-	"8.26.56.26",
-	"8.20.247.20",
-	"64.6.64.6",
-	"64.6.65.6",
+	//"208.67.222.222",
+	//"208.67.220.220",
+	//"8.26.56.26",
+	//"8.20.247.20",
+	//"64.6.64.6",
+	//"64.6.65.6",
 }
 
 // dns池
@@ -83,4 +83,9 @@ func randomDns() string {
 	rand.Seed(time.Now().UnixNano())
 	intn := rand.Intn(i)
 	return dnsList[intn]
+}
+
+func GetDns() *dns_resolver.DnsResolver {
+	resolver := dns_resolver.New([]string{randomDns()})
+	return resolver
 }
