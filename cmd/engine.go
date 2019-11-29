@@ -125,16 +125,23 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 			if ok {
 				result, ips, err := utils.DnsParsing(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
 				if err != nil {
+					ic := 0
 					// 如果超时就回写
 					if err == utils.TimeOut {
 						bug <- domain
+						ic = 1
 						continue
+					}
+					// 如果这个域名是没有效果的
+					if ic == 1 {
+						panic("eeeeeeeeeeeeeeeeee")
 					}
 					okmu.Lock()
 					oktotal++
 					okmu.Unlock()
 					continue
 				}
+				// 如果这个域名是有效的
 				okmu.Lock()
 				oktotal++
 				okmu.Unlock()

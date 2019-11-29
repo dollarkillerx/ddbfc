@@ -42,5 +42,8 @@ GLOBAL OPTIONS:
 ### 引入依赖
 - 发现全球高可用公共dnsList  github.com/dollarkillerx/publicDns
 
+后面想了想就把这个做成单独的服务抽离出去
+
 黑名单 (伊朗  奥地利 微软 乱解析到的IP)  要过滤调
 "208.91.112.55"  "10.10.34.35"  "213.94.80.190"
+

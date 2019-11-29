@@ -7,14 +7,15 @@
 package utils
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/dollarkillerx/easyutils/clog"
-	"github.com/dollarkillerx/publicDns/service"
 	"log"
 	"math/rand"
 	"time"
 
 	"github.com/bogdanovich/dns_resolver"
+	"github.com/dollarkillerx/easyutils/httplib"
 )
 
 var dnsList = []string{
@@ -90,17 +91,30 @@ func GetDns() (*dns_resolver.DnsResolver, string) {
 // dns相关的初始化 (获取全球dns)
 func init() {
 	// 获取全球public dns list
-	lists, e := service.GetPublicDnsListService()
+	lists, e := getDnsList()
 	if e != nil {
-		clog.PrintWa(e)
-		log.Fatalln("获取全球开公共dns失败")
+		clog.PrintWa("DnsList 获取失败")
+		log.Fatalln(e)
 	}
-
 	// 更新dns列表
 	for _, ic := range lists {
-		dnsList = append(dnsList, ic.Ip)
+		dnsList = append(dnsList, ic)
 	}
 	log.Println("全球DnsList初始化成功")
+}
+
+func getDnsList() ([]string, error) {
+	//https://dns.bilibilil.cf/getdnslist
+	bytes, e := httplib.EuUserGet("https://dns.bilibilil.cf/getdnslist")
+	if e != nil {
+		return nil, e
+	}
+	dns := []string{}
+	e = json.Unmarshal(bytes, &dns)
+	if e != nil {
+		return nil, e
+	}
+	return dns, nil
 }
 
 // 负载均衡Dns

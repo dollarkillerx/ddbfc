@@ -10,11 +10,9 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"github.com/dollarkillerx/easyutils/clog"
 	"github.com/miekg/dns"
 	"log"
 	"net"
-	"strings"
 	"time"
 )
 
@@ -36,7 +34,7 @@ func DnsParsing(domain string, timeout int, tryNum int) (string, []net.IP, error
 
 			return dnsString, ips, nil
 		} else if err != nil {
-			if checkTimeOut(err) {
+			if checkTimeOut(err,dnsString) {
 				return "", nil, TimeOut
 			}
 		}
@@ -49,56 +47,56 @@ func DnsParsing(domain string, timeout int, tryNum int) (string, []net.IP, error
 
 var TimeOut = errors.New("timeout")
 
-func DnsParsing2(domain string, timeout int, tryNum int) error {
-	var err error
-	for i := 0; i < tryNum; i++ {
-		timeo := time.Now().Add(time.Second)
-		conn, er := newDns("8.8.8.8:53")
-		if er != nil {
-			continue
-		}
-		// 进行dns查询
-		msg := &dns.Msg{}
-		// 进行A记录的查询
-		msg.SetQuestion(dns.Fqdn(domain), dns.TypeA)
-		if err = conn.SetWriteDeadline(time.Now().Add(time.Second)); err != nil {
-			clog.PrintEr(err)
-			continue
-		}
-
-		if err = conn.WriteMsg(msg); err != nil {
-			return TimeOut
-			continue
-		}
-
-		if err = conn.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
-			clog.PrintEr(err)
-			continue
-		}
-		if msg, err = conn.ReadMsg(); err != nil || len(msg.Question) == 0 {
-			if err != nil {
-				if checkTimeOut(err) {
-					return TimeOut
-				}
-			}
-			continue
-		}
-
-		if time.Now().After(timeo) || time.Now().Equal(timeo) {
-			return TimeOut
-		}
-
-		record := NewRecord(domain, msg.Answer)
-		if record != nil {
-			return nil
-		}
-
-	}
-	if err == nil {
-		err = errors.New("dns err")
-	}
-	return err
-}
+//func DnsParsing2(domain string, timeout int, tryNum int) error {
+//	var err error
+//	for i := 0; i < tryNum; i++ {
+//		timeo := time.Now().Add(time.Second)
+//		conn, er := newDns("8.8.8.8:53")
+//		if er != nil {
+//			continue
+//		}
+//		// 进行dns查询
+//		msg := &dns.Msg{}
+//		// 进行A记录的查询
+//		msg.SetQuestion(dns.Fqdn(domain), dns.TypeA)
+//		if err = conn.SetWriteDeadline(time.Now().Add(time.Second)); err != nil {
+//			clog.PrintEr(err)
+//			continue
+//		}
+//
+//		if err = conn.WriteMsg(msg); err != nil {
+//			return TimeOut
+//			continue
+//		}
+//
+//		if err = conn.SetReadDeadline(time.Now().Add(time.Second)); err != nil {
+//			clog.PrintEr(err)
+//			continue
+//		}
+//		if msg, err = conn.ReadMsg(); err != nil || len(msg.Question) == 0 {
+//			if err != nil {
+//				if checkTimeOut(err,) {
+//					return TimeOut
+//				}
+//			}
+//			continue
+//		}
+//
+//		if time.Now().After(timeo) || time.Now().Equal(timeo) {
+//			return TimeOut
+//		}
+//
+//		record := NewRecord(domain, msg.Answer)
+//		if record != nil {
+//			return nil
+//		}
+//
+//	}
+//	if err == nil {
+//		err = errors.New("dns err")
+//	}
+//	return err
+//}
 
 // 创建dns连接
 func newDns(host string) (*dns.Conn, error) {
@@ -241,15 +239,16 @@ func isPanDNS(domain string, response []dns.RR) bool {
 	return true
 }
 
-func checkTimeOut(err error) bool {
+func checkTimeOut(err error,dns string) bool {
 	//if index := strings.Index(err.Error(), "timeout"); index != -1 {
 	//	return true
 	//}
 	//return false
-	if err.Error() != "NXDOMAIN" || strings.Index(err.Error(), "timeout") != -1 {
-		log.Println(err.Error())
-	}
+	//if err.Error() != "NXDOMAIN" || strings.Index(err.Error(), "timeout") != -1 {
+	//	log.Println(err.Error())
+	//}
 	if err.Error() != "NXDOMAIN" {
+		log.Println(err,dns)
 		return true
 	}
 	return false
@@ -257,7 +256,7 @@ func checkTimeOut(err error) bool {
 
 // 过滤特殊ip  (经过测试伊朗和奥地利 把没有解析的dns 竟然解析出来了666)
 func filterIp(ip string) bool {
-	if ip == "208.91.112.55" || ip == "10.10.34.35" || ip == "213.94.80.190" {
+	if ip == "208.91.112.55" || ip == "10.10.34.35" || ip == "213.94.80.190" || ip == "31.13.95.36" || ip == "127.0.0.1" || ip == "92.242.140.20" {
 		return false
 	}
 	return true
