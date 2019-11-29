@@ -108,8 +108,8 @@ func TestTimeOUte(t *testing.T) {
 }
 
 func TestNewDns(t *testing.T) {
-	resolver := dns_resolver.New([]string{"208.67.222.222"})
-	ips, e := resolver.LookupHost("ns.worldlink.com")
+	resolver := dns_resolver.New([]string{"188.191.160.1"})
+	ips, e := resolver.LookupHost("www.worldlink.com")
 	if e != nil {
 		log.Println(e)
 		return

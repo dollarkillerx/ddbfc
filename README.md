@@ -38,3 +38,6 @@ GLOBAL OPTIONS:
    --help, -h                 show help
    --version, -v              print the version
 ```
+
+### 引入依赖
+- 发现全球高可用公共dnsList  github.com/dollarkillerx/publicDns
