@@ -12,7 +12,9 @@ import (
 	"errors"
 	"github.com/dollarkillerx/easyutils/clog"
 	"github.com/miekg/dns"
+	"log"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -244,6 +246,9 @@ func checkTimeOut(err error) bool {
 	//	return true
 	//}
 	//return false
+	if err.Error() != "NXDOMAIN" || strings.Index(err.Error(), "timeout") != -1 {
+		log.Println(err.Error())
+	}
 	if err.Error() != "NXDOMAIN" {
 		return true
 	}
