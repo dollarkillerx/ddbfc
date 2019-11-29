@@ -34,7 +34,7 @@ func DnsParsing(domain string, timeout int, tryNum int) (string, []net.IP, error
 
 			return dnsString, ips, nil
 		} else if err != nil {
-			if checkTimeOut(err,dnsString) {
+			if checkTimeOut(err, dnsString) {
 				return "", nil, TimeOut
 			}
 		}
@@ -239,7 +239,7 @@ func isPanDNS(domain string, response []dns.RR) bool {
 	return true
 }
 
-func checkTimeOut(err error,dns string) bool {
+func checkTimeOut(err error, dns string) bool {
 	//if index := strings.Index(err.Error(), "timeout"); index != -1 {
 	//	return true
 	//}
@@ -248,7 +248,7 @@ func checkTimeOut(err error,dns string) bool {
 	//	log.Println(err.Error())
 	//}
 	if err.Error() != "NXDOMAIN" {
-		log.Println(err,dns)
+		log.Println(err, dns)
 		return true
 	}
 	return false
