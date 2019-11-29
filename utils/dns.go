@@ -20,24 +20,29 @@ import (
 // @param 域名
 // @param 超时时间
 // @param 尝试次数
-func DnsParsing(domain string, timeout int, tryNum int) error {
+func DnsParsing(domain string, timeout int, tryNum int) (string, []net.IP, error) {
 	var err error
 	var ips []net.IP
 	for i := 0; i < tryNum; i++ {
-		dns := GetDns()
+		dns, dnsString := GetDns()
 		ips, err = dns.LookupHost(domain)
 		if err == nil && len(ips) != 0 {
-			return nil
+			if !filterIp(ips[0].String()) {
+				// 如果特殊id就跳过
+				continue
+			}
+
+			return dnsString, ips, nil
 		} else if err != nil {
 			if checkTimeOut(err) {
-				return TimeOut
+				return "", nil, TimeOut
 			}
 		}
 	}
 	if err == nil {
-		return errors.New("not dns")
+		return "", nil, errors.New("not dns")
 	}
-	return err
+	return "", nil, err
 }
 
 var TimeOut = errors.New("timeout")
@@ -243,4 +248,12 @@ func checkTimeOut(err error) bool {
 		return true
 	}
 	return false
+}
+
+// 过滤特殊ip  (经过测试伊朗和奥地利 把没有解析的dns 竟然解析出来了666)
+func filterIp(ip string) bool {
+	if ip == "208.91.112.55" || ip == "10.10.34.35" || ip == "213.94.80.190" {
+		return false
+	}
+	return true
 }

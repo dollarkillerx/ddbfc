@@ -11,6 +11,7 @@ import (
 	"ddbf/utils"
 	"io/ioutil"
 	"log"
+	"net"
 	"strings"
 	"sync"
 	"time"
@@ -103,6 +104,12 @@ func (e *Engine) start() {
 	wg.Wait()
 }
 
+type DnsResult struct {
+	Domain string // 域名
+	Dns    string // 解析它成功的dns
+	Ips    []net.IP
+}
+
 func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 	defer func() {
 		wg.Done()
@@ -116,7 +123,7 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 		select {
 		case domain, ok := <-bug:
 			if ok {
-				err := utils.DnsParsing(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
+				result, ips, err := utils.DnsParsing(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
 				if err != nil {
 					// 如果超时就回写
 					if err == utils.TimeOut {
@@ -132,7 +139,11 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 				oktotal++
 				okmu.Unlock()
 				// 如果可行 写入到domain中
-				model.BaseModel.DomainQueue.Append(domain)
+				model.BaseModel.DomainQueue.Append(DnsResult{
+					Domain: domain,
+					Dns:    result,
+					Ips:    ips,
+				})
 			} else {
 				return
 			}

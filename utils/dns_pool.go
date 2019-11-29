@@ -8,6 +8,8 @@ package utils
 
 import (
 	"errors"
+	"github.com/dollarkillerx/easyutils/clog"
+	"github.com/dollarkillerx/publicDns/service"
 	"log"
 	"math/rand"
 	"time"
@@ -22,12 +24,6 @@ var dnsList = []string{
 	"8.8.4.4",
 	"9.9.9.9",
 	"9.9.9.10",
-	//"208.67.222.222",
-	//"208.67.220.220",
-	//"8.26.56.26",
-	//"8.20.247.20",
-	//"64.6.64.6",
-	//"64.6.65.6",
 }
 
 // dns池
@@ -85,7 +81,29 @@ func randomDns() string {
 	return dnsList[intn]
 }
 
-func GetDns() *dns_resolver.DnsResolver {
-	resolver := dns_resolver.New([]string{randomDns()})
-	return resolver
+func GetDns() (*dns_resolver.DnsResolver, string) {
+	dns := randomDns()
+	resolver := dns_resolver.New([]string{dns})
+	return resolver, dns
 }
+
+// dns相关的初始化 (获取全球dns)
+func init() {
+	// 获取全球public dns list
+	lists, e := service.GetPublicDnsListService()
+	if e != nil {
+		clog.PrintWa(e)
+		log.Fatalln("获取全球开公共dns失败")
+	}
+
+	// 更新dns列表
+	for _, ic := range lists {
+		dnsList = append(dnsList, ic.Ip)
+	}
+	log.Println("全球DnsList初始化成功")
+}
+
+// 负载均衡Dns
+//func LoadDns() string {
+//
+//}

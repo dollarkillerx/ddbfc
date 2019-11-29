@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/bogdanovich/dns_resolver"
 	"github.com/dollarkillerx/easyutils/clog"
+	"github.com/dollarkillerx/publicDns/service"
 	"github.com/miekg/dns"
 	"log"
 	"testing"
@@ -28,7 +29,7 @@ func TestDnsParsing(t *testing.T) {
 	}
 
 	for _, domain := range domains {
-		err := DnsParsing(domain, 1, 3)
+		_, err := DnsParsing(domain, 1, 3)
 		if err != nil {
 			log.Println("err:  ", domain)
 			log.Println(err)
@@ -108,11 +109,25 @@ func TestTimeOUte(t *testing.T) {
 }
 
 func TestNewDns(t *testing.T) {
-	resolver := dns_resolver.New([]string{"188.191.160.1"})
-	ips, e := resolver.LookupHost("www.worldlink.com")
+	//lux4u.dollarkiller.com 89.165.2.25
+	resolver := dns_resolver.New([]string{"89.165.2.25"})
+	ips, e := resolver.LookupHost("lux4u.dollarkiller.com")
 	if e != nil {
 		log.Println(e)
 		return
 	}
 	log.Println(ips)
+}
+
+func TestGlobleDnsList(t *testing.T) {
+	lists, e := service.GetPublicDnsListService()
+	if e != nil {
+		clog.PrintWa(e)
+		log.Fatalln("获取全球开公共dns失败")
+	}
+	// 更新dns列表
+	for _, ic := range lists {
+		dnsList = append(dnsList, ic.Ip)
+	}
+	log.Println("全球DnsList初始化成功")
 }
