@@ -24,8 +24,11 @@ func DnsParsing(domain string, timeout int, tryNum int) (string, []net.IP, error
 	var err error
 	var ips []net.IP
 	for i := 0; i < tryNum; i++ {
-		dns, dnsString := GetDns()
-		ips, err = dns.LookupHost(domain)
+		//dns, dnsString := GetDns()
+		//ips, err = dns.LookupHost(domain)
+		server := SDnsGet()
+		dnsString := server.DnsIds.IP
+		ips, err = server.Check(domain)
 		if err == nil && len(ips) != 0 {
 			if !filterIp(ips[0].String()) {
 				// 如果特殊id就跳过

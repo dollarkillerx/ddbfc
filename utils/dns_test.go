@@ -38,23 +38,23 @@ func TestDnsParsing(t *testing.T) {
 }
 
 // is new test
-func TestNewDnsTest(t *testing.T) {
-	domains := []string{
-		"www.dollarkiller.com",
-		"dollarkiller.com",
-		"ps.cs",
-		"xxxp.baidu.com",
-		"www.baidu.com",
-	}
-
-	for _, domain := range domains {
-		//testDomain(domain)
-		parsing2 := DnsParsing2(domain, 1, 2)
-		if parsing2 == nil {
-			log.Println(domain)
-		}
-	}
-}
+//func TestNewDnsTest(t *testing.T) {
+//	domains := []string{
+//		"www.dollarkiller.com",
+//		"dollarkiller.com",
+//		"ps.cs",
+//		"xxxp.baidu.com",
+//		"www.baidu.com",
+//	}
+//
+//	for _, domain := range domains {
+//		//testDomain(domain)
+//		parsing2 := DnsParsing2(domain, 1, 2)
+//		if parsing2 == nil {
+//			log.Println(domain)
+//		}
+//	}
+//}
 
 func testDomain(domain string) {
 	defer func() {

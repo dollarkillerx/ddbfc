@@ -24,4 +24,3 @@ func (v *Virustotal) getURL(domain string) string {
 
 	return fmt.Sprintf(format, domain)
 }
-
