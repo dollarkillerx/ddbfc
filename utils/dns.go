@@ -21,6 +21,7 @@ import (
 // @param 超时时间
 // @param 尝试次数
 func DnsParsing(domain string, timeout int, tryNum int) (string, []net.IP, error) {
+	//domain = "www.dollarkiller.com"
 	var err error
 	var ips []net.IP
 	for i := 0; i < tryNum; i++ {
@@ -247,6 +248,10 @@ func checkTimeOut(err error, dns string) bool {
 	//if err.Error() != "NXDOMAIN" || strings.Index(err.Error(), "timeout") != -1 {
 	//	log.Println(err.Error())
 	//}
+	if err.Error() == "dns: bad rdata" {
+		return false
+	}
+
 	if err.Error() != "NXDOMAIN" {
 		log.Println(err, dns)
 		return true
@@ -260,4 +265,6 @@ func filterIp(ip string) bool {
 		return false
 	}
 	return true
+
+	//json.Unmarshal()
 }

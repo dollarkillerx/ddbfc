@@ -16,7 +16,9 @@ func (v *Virustotal) New() *Virustotal {
 }
 
 func (v *Virustotal) ParseDomain(domain string) DomainList {
-
+	url := v.getURL(domain)
+	url = url
+	return nil
 }
 
 func (v *Virustotal) getURL(domain string) string {
@@ -24,4 +26,3 @@ func (v *Virustotal) getURL(domain string) string {
 
 	return fmt.Sprintf(format, domain)
 }
-
