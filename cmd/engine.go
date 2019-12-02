@@ -9,7 +9,6 @@ package cmd
 import (
 	"ddbf/model"
 	"ddbf/utils"
-	"github.com/dollarkillerx/easyutils/clog"
 	"io/ioutil"
 	"log"
 	"net"
@@ -143,7 +142,7 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 						okmu.Unlock()
 						continue
 					}
-					clog.PrintEr(err)
+					//clog.PrintEr(err)
 					bug <- domain
 					continue
 				}
@@ -187,10 +186,12 @@ func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 // 打印日志
 func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan string) {
 	defer wg.Done()
+	secTime := time.NewTicker(time.Second)
+
 	go func() {
 		for {
 			select {
-			case <-time.After(time.Second * 10):
+			case <-secTime.C:
 				log.Println("===========================")
 				if oktotal >= len {
 					close(bus)
@@ -203,10 +204,12 @@ func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan s
 			}
 		}
 	}()
+	ticker := time.NewTicker(time.Second)
+
 	go func() {
 		for {
 			select {
-			case <-time.After(time.Second):
+			case <-ticker.C:
 				mcmu.Lock()
 				if mc >= model.BaseModel.Max {
 					// 程序完结
@@ -221,6 +224,7 @@ func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan s
 			}
 		}
 	}()
+
 	for {
 		select {
 		case <-model.BaseModel.DomainEnd:

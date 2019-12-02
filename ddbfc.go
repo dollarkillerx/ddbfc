@@ -11,9 +11,14 @@ import (
 	"github.com/urfave/cli"
 	"log"
 	"os"
+	"runtime/pprof"
+	"time"
 )
 
 func main() {
+	// 进行性能分析
+	go scp()
+
 	app := cli.NewApp()
 	app.Name = "DdbFC"
 	app.Author = "DollarKiller"
@@ -25,8 +30,22 @@ func main() {
 
 	app.Action = cmd.ScanIc
 	err := app.Run(os.Args)
+
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+}
+
+func scp() {
+	cpuf, e := os.Create("cpu_profile")
+	if e != nil {
+		log.Fatalln(e)
+	}
+	pprof.StartCPUProfile(cpuf)
+
+	time.Sleep(30 * time.Second)
+	defer pprof.StopCPUProfile()
+
+	log.Println("关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||")
 }

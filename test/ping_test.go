@@ -91,3 +91,17 @@ func TestChannel2(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestTime(t *testing.T) {
+	ticker := time.NewTicker(time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				log.Println("cc")
+			}
+		}
+	}()
+
+	time.Sleep(time.Second * 10)
+}
