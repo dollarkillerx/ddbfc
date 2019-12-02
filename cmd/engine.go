@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -171,7 +172,7 @@ func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 }
 
 // 打印日志
-func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan string, out chan string) {
+func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, lens int, bus chan string, out chan string) {
 	defer wg.Done()
 
 	ticker := time.NewTicker(time.Second)
@@ -183,30 +184,39 @@ func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan s
 				val := atomic.LoadUint64(&jsq)
 				fmt.Println("=======================")
 				fmt.Println("已完成任务数: ", val)
-				fmt.Println("总任务数: ", len)
-				//fmt.Println("当前运行协程数: ", runtime.NumGoroutine())
+				fmt.Println("总任务数: ", lens)
 				fmt.Println("=======================")
 
-				if int(val) >= len+1 {
+				if int(val) >= lens-600 && len(bus) == 0 {
 					// 程序完结
 					time.Sleep(time.Millisecond * 200)
 					log.Println(">>>>>>>>>>>>程序完结<<<<<<<<<<<<<<")
-					log.Println("字典总长度: ", len)
+					log.Println("字典总长度: ", lens)
 					log.Println("总耗时: ", time.Since(tic))
 					log.Println(">>>>>>>>>>>>程序完结End<<<<<<<<<<<<<<")
 					close(model.BaseModel.DomainEnd)
+
 				}
+			case <-model.BaseModel.DomainEnd:
+				close(bus)
+				close(out)
+				os.Exit(0)
+				return
+			case domain := <-out:
+				log.Printf("成功: %v", domain)
 			}
 		}
 	}()
 
 	// 定时打印
-	for {
-		select {
-		case <-model.BaseModel.DomainEnd:
-			return
-		case domain := <-out:
-			log.Printf("成功: %v", domain)
-		}
-	}
+	//for {
+	//	select {
+	//	case <-model.BaseModel.DomainEnd:
+	//		close(bus)
+	//		close(out)
+	//		return
+	//	case domain := <-out:
+	//		log.Printf("成功: %v", domain)
+	//	}
+	//}
 }

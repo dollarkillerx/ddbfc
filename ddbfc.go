@@ -8,10 +8,9 @@ package main
 
 import (
 	"ddbf/cmd"
+	"github.com/urfave/cli"
 	"log"
 	"os"
-
-	"github.com/urfave/cli"
 )
 
 func main() {
