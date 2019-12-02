@@ -16,45 +16,45 @@ import (
 	"time"
 )
 
-func TestDnsParsing(t *testing.T) {
-	domains := []string{
-		"www.baidu.com",
-		"www.dollarkiller.com",
-		"dollarkiller.com",
-		"qq.com",
-		"google.com",
-		"1688.com",
-		"360.com",
-	}
-
-	for _, domain := range domains {
-		_, _, err := DnsParsing(domain, 1, 3)
-		if err != nil {
-			log.Println("err:  ", domain)
-			log.Println(err)
-			continue
-		}
-	}
-}
+//func TestDnsParsing(t *testing.T) {
+//	domains := []string{
+//		"www.baidu.com",
+//		"www.dollarkiller.com",
+//		"dollarkiller.com",
+//		"qq.com",
+//		"google.com",
+//		"1688.com",
+//		"360.com",
+//	}
+//
+//	for _, domain := range domains {
+//		_, _, err := DnsParsing(domain, 1, 3)
+//		if err != nil {
+//			log.Println("err:  ", domain)
+//			log.Println(err)
+//			continue
+//		}
+//	}
+//}
 
 // is new test
-func TestNewDnsTest(t *testing.T) {
-	domains := []string{
-		"www.dollarkiller.com",
-		"dollarkiller.com",
-		"ps.cs",
-		"xxxp.baidu.com",
-		"www.baidu.com",
-	}
-
-	for _, domain := range domains {
-		//testDomain(domain)
-		parsing2 := DnsParsing2(domain, 1, 2)
-		if parsing2 == nil {
-			log.Println(domain)
-		}
-	}
-}
+//func TestNewDnsTest(t *testing.T) {
+//	domains := []string{
+//		"www.dollarkiller.com",
+//		"dollarkiller.com",
+//		"ps.cs",
+//		"xxxp.baidu.com",
+//		"www.baidu.com",
+//	}
+//
+//	for _, domain := range domains {
+//		//testDomain(domain)
+//		parsing2 := DnsParsing2(domain, 1, 2)
+//		if parsing2 == nil {
+//			log.Println(domain)
+//		}
+//	}
+//}
 
 func testDomain(domain string) {
 	defer func() {

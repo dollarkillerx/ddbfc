@@ -12,7 +12,6 @@ import (
 	"errors"
 	"github.com/miekg/dns"
 	"log"
-	"net"
 	"time"
 )
 
@@ -20,31 +19,31 @@ import (
 // @param 域名
 // @param 超时时间
 // @param 尝试次数
-func DnsParsing(domain string, timeout int, tryNum int) (string, []net.IP, error) {
-	//domain = "www.dollarkiller.com"
-	var err error
-	var ips []net.IP
-	for i := 0; i < tryNum; i++ {
-		dns, dnsString := GetDns()
-		ips, err = dns.LookupHost(domain)
-		if err == nil && len(ips) != 0 {
-			if !filterIp(ips[0].String()) {
-				// 如果特殊id就跳过
-				continue
-			}
-
-			return dnsString, ips, nil
-		} else if err != nil {
-			if checkTimeOut(err, dnsString) {
-				return "", nil, TimeOut
-			}
-		}
-	}
-	if err == nil {
-		return "", nil, errors.New("not dns")
-	}
-	return "", nil, err
-}
+//func DnsParsing(domain string, timeout int, tryNum int) (string, []net.IP, error) {
+//	//domain = "www.dollarkiller.com"
+//	var err error
+//	var ips []net.IP
+//	for i := 0; i < tryNum; i++ {
+//		dns, dnsString := GetDns()
+//		ips, err = dns.LookupHost(domain)
+//		if err == nil && len(ips) != 0 {
+//			if !filterIp(ips[0].String()) {
+//				// 如果特殊id就跳过
+//				continue
+//			}
+//
+//			return dnsString, ips, nil
+//		} else if err != nil {
+//			if checkTimeOut(err, dnsString) {
+//				return "", nil, TimeOut
+//			}
+//		}
+//	}
+//	if err == nil {
+//		return "", nil, errors.New("not dns")
+//	}
+//	return "", nil, err
+//}
 
 var TimeOut = errors.New("timeout")
 

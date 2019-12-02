@@ -9,6 +9,7 @@ package cmd
 import (
 	"ddbf/model"
 	"ddbf/utils"
+	"github.com/dollarkillerx/easyutils/clog"
 	"io/ioutil"
 	"log"
 	"net"
@@ -123,24 +124,37 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 		select {
 		case domain, ok := <-bug:
 			if ok {
-				result, ips, err := utils.DnsParsing(domain, model.BaseModel.TimeOut, model.BaseModel.TryNum)
+				pool, err := utils.GetDnsByPool(time.Second * 200)
 				if err != nil {
-					ic := 0
-					// 如果超时就回写
-					if err == utils.TimeOut {
-						bug <- domain
-						ic = 1
+					log.Panic(err)
+				}
+
+				b, err := pool.DnsParse(domain)
+				erc := utils.ReleaseDns(pool)
+				if erc != nil {
+					panic(err)
+				}
+				if err != nil {
+					// 如果本次查询错误
+					if err.Error() == "dns: bad rdata" {
+						// 如果这个域名是没有效果的
+						okmu.Lock()
+						oktotal++
+						okmu.Unlock()
 						continue
 					}
+					clog.PrintEr(err)
+					bug <- domain
+					continue
+				}
+				if !b {
 					// 如果这个域名是没有效果的
-					if ic == 1 {
-						panic("eeeeeeeeeeeeeeeeee")
-					}
 					okmu.Lock()
 					oktotal++
 					okmu.Unlock()
 					continue
 				}
+
 				// 如果这个域名是有效的
 				okmu.Lock()
 				oktotal++
@@ -148,8 +162,8 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
 				// 如果可行 写入到domain中
 				model.BaseModel.DomainQueue.Append(DnsResult{
 					Domain: domain,
-					Dns:    result,
-					Ips:    ips,
+					Dns:    "",
+					Ips:    nil,
 				})
 			} else {
 				return

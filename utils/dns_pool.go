@@ -10,12 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/dollarkillerx/easyutils/clog"
-	"log"
+	"github.com/dollarkillerx/easyutils/httplib"
+	"github.com/miekg/dns"
 	"math/rand"
 	"time"
-
-	"github.com/bogdanovich/dns_resolver"
-	"github.com/dollarkillerx/easyutils/httplib"
 )
 
 var dnsList = []string{
@@ -29,81 +27,181 @@ var dnsList = []string{
 	"208.67.220.220",
 }
 
-// dns池
+// 高效dns连接池
+
+// 单个dns连接
+type DnsCoon struct {
+	dns     *dns.Conn // dns连接
+	version int       // 当前连接的版本号
+	host    string    // 当前连接那个dns
+}
+
+// 解析域名  是否存在,本次查询是否出错
+func (d *DnsCoon) DnsParse(domain string) (bool, error) {
+	msg := &dns.Msg{}
+	// 创建一个查询消息体
+	msg.SetQuestion(dns.Fqdn(domain), dns.TypeA)
+	// 与当前dns建立连接
+
+	e := d.dns.SetWriteDeadline(time.Now().Add(time.Second))
+	if e != nil {
+		return false, e
+	}
+
+	// 发送查询数据
+	e = d.dns.WriteMsg(msg)
+	if e != nil {
+		return false, e
+
+	}
+
+	// 以下是接受数据阶段
+	readMsg, e := d.dns.ReadMsg()
+	if e != nil || len(readMsg.Question) == 0 {
+		// 如果没有数据
+		if e != nil {
+			return false, e
+
+		} else {
+			return false, errors.New("not data")
+		}
+	}
+	if len(readMsg.Answer) == 0 {
+		return false, nil
+	} else {
+		return true, nil
+	}
+}
+
+// dns连接池
 type dnsPool struct {
-	bufChan chan *dns_resolver.DnsResolver
+	bufChan chan *DnsCoon
 }
 
 var DnsPool *dnsPool
 
-// 初始化dns查询连接池
+var dnsNum = 1000 // 设在池容量
+
+// 初始化dns连接池
 func init() {
-	// 初始化连接池 容量100  单个查询超时5
-	DnsPool = NewDnsPool(1, 1)
-}
-
-func NewDnsPool(num int, timeout int) *dnsPool {
-	pool := dnsPool{}
-	pool.bufChan = make(chan *dns_resolver.DnsResolver, num)
-
-	// 创建对象
-	for i := 0; i < num; i++ {
-		resolver := dns_resolver.New([]string{randomDns()})
-		resolver.RetryTimes = timeout
-		pool.bufChan <- resolver
-	}
-
-	return &pool
-}
-
-// 获取dns连接对象 (这里没有作超时控制,就让他阻塞)
-func (d *dnsPool) GetDns() *dns_resolver.DnsResolver {
-	select {
-	case dns := <-d.bufChan:
-		return dns
+	// 初始化池
+	DnsPool = &dnsPool{bufChan: make(chan *DnsCoon, dnsNum)}
+	// 初始化池中数据
+	for i := 0; i < dnsNum; i++ {
+		conn, s, e := getRandDnsCoon()
+		if e != nil {
+			clog.PrintWa(e)
+			continue
+		}
+		dns := &DnsCoon{host: s, dns: conn, version: 0}
+		DnsPool.bufChan <- dns
 	}
 }
 
-// 放回对象
-func (d *dnsPool) ReleaseDns(dns *dns_resolver.DnsResolver) error {
+// 获取随机dns连接
+func getRandDnsCoon() (*dns.Conn, string, error) {
+	rand.Seed(time.Now().UnixNano())
+	intn := rand.Intn(len(dnsList))
+	host := dnsList[intn] + ":53"
+	conn, err := dns.DialTimeout("udp", host, time.Second)
+	return conn, host, err
+}
+
+// 从dns连接池中获得连接
+func GetDnsByPool(timeout time.Duration) (*DnsCoon, error) {
 	select {
-	case d.bufChan <- dns:
-		log.Println("被放回了")
-		log.Println(len(d.bufChan))
+	case dns := <-DnsPool.bufChan:
+		return dns, nil
+	case <-time.After(timeout):
+		return nil, errors.New("time out")
+	}
+}
+
+// 放回连接
+func ReleaseDns(dns *DnsCoon) error {
+	select {
+	case DnsPool.bufChan <- dns:
 		return nil
 	default:
 		return errors.New("pool overflow")
 	}
 }
 
-// 获取随即dns
-func randomDns() string {
-	i := len(dnsList)
-	rand.Seed(time.Now().UnixNano())
-	intn := rand.Intn(i)
-	return dnsList[intn]
-}
-
-func GetDns() (*dns_resolver.DnsResolver, string) {
-	dns := randomDns()
-	resolver := dns_resolver.New([]string{dns})
-	return resolver, dns
-}
+//// dns池
+//type dnsPool struct {
+//	bufChan chan *dns_resolver.DnsResolver
+//}
+//
+//var DnsPool *dnsPool
+//
+//// 初始化dns查询连接池
+//func init() {
+//	// 初始化连接池 容量100  单个查询超时5
+//	DnsPool = NewDnsPool(1, 1)
+//}
+//
+//func NewDnsPool(num int, timeout int) *dnsPool {
+//	pool := dnsPool{}
+//	pool.bufChan = make(chan *dns_resolver.DnsResolver, num)
+//
+//	// 创建对象
+//	for i := 0; i < num; i++ {
+//		resolver := dns_resolver.New([]string{randomDns()})
+//		resolver.RetryTimes = timeout
+//		pool.bufChan <- resolver
+//	}
+//
+//	return &pool
+//}
+//
+//// 获取dns连接对象 (这里没有作超时控制,就让他阻塞)
+//func (d *dnsPool) GetDns() *dns_resolver.DnsResolver {
+//	select {
+//	case dns := <-d.bufChan:
+//		return dns
+//	}
+//}
+//
+//// 放回对象
+//func (d *dnsPool) ReleaseDns(dns *dns_resolver.DnsResolver) error {
+//	select {
+//	case d.bufChan <- dns:
+//		log.Println("被放回了")
+//		log.Println(len(d.bufChan))
+//		return nil
+//	default:
+//		return errors.New("pool overflow")
+//	}
+//}
+//
+//// 获取随即dns
+//func randomDns() string {
+//	i := len(dnsList)
+//	rand.Seed(time.Now().UnixNano())
+//	intn := rand.Intn(i)
+//	return dnsList[intn]
+//}
+//
+//func GetDns() (*dns_resolver.DnsResolver, string) {
+//	dns := randomDns()
+//	resolver := dns_resolver.New([]string{dns})
+//	return resolver, dns
+//}
 
 // dns相关的初始化 (获取全球dns)
-func init() {
-	// 获取全球public dns list
-	lists, e := getDnsList()
-	if e != nil {
-		clog.PrintWa("DnsList 获取失败")
-		log.Fatalln(e)
-	}
-	// 更新dns列表
-	for _, ic := range lists {
-		dnsList = append(dnsList, ic)
-	}
-	log.Println("全球DnsList初始化成功")
-}
+//func init() {
+//	// 获取全球public dns list
+//	lists, e := getDnsList()
+//	if e != nil {
+//		clog.PrintWa("DnsList 获取失败")
+//		log.Fatalln(e)
+//	}
+//	// 更新dns列表
+//	for _, ic := range lists {
+//		dnsList = append(dnsList, ic)
+//	}
+//	log.Println("全球DnsList初始化成功")
+//}
 
 func getDnsList() ([]string, error) {
 	//https://dns.bilibilil.cf/getdnslist
