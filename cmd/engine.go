@@ -9,11 +9,13 @@ package cmd
 import (
 	"ddbf/model"
 	"ddbf/utils"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -23,6 +25,10 @@ const (
 	dicPath = "dic/base.dic"                                                           // 字典文件路径
 	dicUlr  = "https://raw.githubusercontent.com/dollarkillerx/ddbfc/cli/dic/base.dic" // 字典文件Url地址
 )
+
+/**
+ * 优化思路 减少锁的开销
+ */
 
 type Engine struct {
 }
@@ -57,6 +63,7 @@ func (e *Engine) initDic() {
 	model.BaseModel.Dic = sets
 }
 
+// 如果没有字典就从github下载默认字典
 func (e *Engine) defaultDic() {
 	err := utils.DirPing(dicDir)
 	if err != nil {
@@ -76,17 +83,13 @@ func (e *Engine) defaultDic() {
 	}
 }
 
-// 一些计数器
-var mcmu sync.Mutex
-var mc = 0
-var okmu sync.Mutex
-var oktotal = 0
-
 // 开启爆破任务
 func (e *Engine) start() {
-	t := time.Now() // 计时器
-	len := model.BaseModel.Dic.Len()
-	bus := make(chan string, len)
+	t := time.Now()                                 // 计时器
+	len := model.BaseModel.Dic.Len()                // 本次执行的消息总数
+	bus := make(chan string, len/10)                // 任务总线
+	out := make(chan string, model.BaseModel.Max*2) // 输出
+
 	wg := &sync.WaitGroup{}
 	wg.Add(model.BaseModel.Max + 2)
 
@@ -94,11 +97,11 @@ func (e *Engine) start() {
 	go e.initChan(wg, bus)
 
 	// 打印日志
-	go e.printLog(wg, t, len, bus)
+	go e.printLog(wg, t, len, bus, out)
 
 	// 暴力破解
 	for i := 0; i < model.BaseModel.Max; i++ {
-		go e.task(wg, bus)
+		go e.task(wg, bus, out)
 	}
 
 	wg.Wait()
@@ -110,60 +113,44 @@ type DnsResult struct {
 	Ips    []net.IP
 }
 
-func (e *Engine) task(wg *sync.WaitGroup, bug chan string) {
+var jsq uint64
+
+func (e *Engine) task(wg *sync.WaitGroup, bug chan string, out chan string) {
 	defer func() {
 		wg.Done()
-
-		// 这个告诉任务
-		mcmu.Lock()
-		mc++
-		mcmu.Unlock()
 	}()
 	for {
 		select {
 		case domain, ok := <-bug:
 			if ok {
-				pool, err := utils.GetDnsByPool(time.Second * 200)
+				// 向资源池中获取
+				pool, err := utils.GetDnsByPool(time.Second * 3)
 				if err != nil {
 					log.Panic(err)
 				}
 
-				b, err := pool.DnsParse(domain)
-				erc := utils.ReleaseDns(pool)
-				if erc != nil {
+				err = pool.DnsParse(domain)
+				// 使用完后放回
+				if err := utils.ReleaseDns(pool); err != nil {
 					panic(err)
 				}
+
 				if err != nil {
 					// 如果本次查询错误
-					if err.Error() == "dns: bad rdata" {
+					if err.Error() == "dns: bad rdata" || err == utils.NoDomain {
 						// 如果这个域名是没有效果的
-						okmu.Lock()
-						oktotal++
-						okmu.Unlock()
+						atomic.AddUint64(&jsq, 1)
 						continue
 					}
-					//clog.PrintEr(err)
+					// 进入这里的多半是 超时
 					bug <- domain
 					continue
 				}
-				if !b {
-					// 如果这个域名是没有效果的
-					okmu.Lock()
-					oktotal++
-					okmu.Unlock()
-					continue
-				}
 
+				atomic.AddUint64(&jsq, 1)
 				// 如果这个域名是有效的
-				okmu.Lock()
-				oktotal++
-				okmu.Unlock()
 				// 如果可行 写入到domain中
-				model.BaseModel.DomainQueue.Append(DnsResult{
-					Domain: domain,
-					Dns:    "",
-					Ips:    nil,
-				})
+				out <- domain
 			} else {
 				return
 			}
@@ -184,34 +171,23 @@ func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 }
 
 // 打印日志
-func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan string) {
+func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan string, out chan string) {
 	defer wg.Done()
-	secTime := time.NewTicker(time.Second)
 
-	go func() {
-		for {
-			select {
-			case <-secTime.C:
-				log.Println("===========================")
-				if oktotal >= len {
-					close(bus)
-				}
-				okmu.Lock()
-				log.Println("已完成任务: ", oktotal)
-				okmu.Unlock()
-				log.Println("总任务数: ", len)
-				log.Println("===========================")
-			}
-		}
-	}()
 	ticker := time.NewTicker(time.Second)
-
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				mcmu.Lock()
-				if mc >= model.BaseModel.Max {
+
+				val := atomic.LoadUint64(&jsq)
+				fmt.Println("=======================")
+				fmt.Println("已完成任务数: ", val)
+				fmt.Println("总任务数: ", len)
+				//fmt.Println("当前运行协程数: ", runtime.NumGoroutine())
+				fmt.Println("=======================")
+
+				if int(val) >= len+1 {
 					// 程序完结
 					time.Sleep(time.Millisecond * 200)
 					log.Println(">>>>>>>>>>>>程序完结<<<<<<<<<<<<<<")
@@ -220,20 +196,17 @@ func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, len int, bus chan s
 					log.Println(">>>>>>>>>>>>程序完结End<<<<<<<<<<<<<<")
 					close(model.BaseModel.DomainEnd)
 				}
-				mcmu.Unlock()
 			}
 		}
 	}()
 
+	// 定时打印
 	for {
 		select {
 		case <-model.BaseModel.DomainEnd:
 			return
-		default:
-			next, b := model.BaseModel.DomainQueue.Next()
-			if b {
-				log.Printf("成功: %v", next)
-			}
+		case domain := <-out:
+			log.Printf("成功: %v", domain)
 		}
 	}
 }

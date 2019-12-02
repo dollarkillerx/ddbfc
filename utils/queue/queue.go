@@ -6,6 +6,8 @@
  */
 package queue
 
+// 后面性能测试这个队列比较消耗cpu就弃用了
+
 import (
 	"sync"
 )

@@ -10,7 +10,7 @@ import (
 	"ddbf/model"
 	"errors"
 	"github.com/urfave/cli"
-	"strings"
+	"log"
 )
 
 var (
@@ -19,45 +19,9 @@ var (
 
 // 绑定相关参数 并初始化系统
 func ScanIc(ctx *cli.Context) error {
-	if ctx.IsSet("domain") {
-		domain := ctx.String("domain")
-		// domain validate
-		if domain == "" {
-			return d400
-		}
-		split := strings.Split(domain, ".")
-		if len(split) < 2 {
-			return d400
-		}
-		model.BaseModel.Domain = domain
+	if model.BaseModel.Domain == "" {
+		log.Fatalln("-h View help")
 	}
-
-	if ctx.IsSet("timeout") {
-		timeoutInt := ctx.Int("timeout")
-		if timeoutInt <= 0 {
-			return d400
-		}
-		model.BaseModel.TimeOut = timeoutInt
-	}
-
-	if ctx.IsSet("tryName") {
-		tryName := ctx.Int("tryName")
-		if tryName <= 0 {
-			return d400
-		}
-		model.BaseModel.TryNum = tryName
-	}
-
-	if ctx.IsSet("max") {
-		maxConcurrent := ctx.Int("max")
-		if maxConcurrent <= 0 {
-			return d400
-		}
-		//log.Println(maxConcurrent)
-		model.BaseModel.Max = maxConcurrent
-		//log.Println(model.BaseModel.Max)
-	}
-
 	// 启动初始化程序
 	EngineInit()
 

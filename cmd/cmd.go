@@ -17,10 +17,12 @@ var Scan = cli.Command{
 	Description: "start to crack weak password",
 	Action:      ScanIc,
 	Flags: []cli.Flag{
-		stringFlag("domain, d", "", "domain"),
-		//intFlag("timeout, t", 400, "Single DNS query timeout Millisecond"),
-		//intFlag("tryNum, r", 3, "Number of attempts"),
-		//intFlag("max, m", 200, "Maximum number of concurrency"),
+		cli.StringFlag{
+			Name:        "domain, d",
+			Value:       "",
+			Usage:       "domain",
+			Destination: &model.BaseModel.Domain,
+		},
 		cli.IntFlag{
 			Name:        "max, m",
 			Value:       200,
@@ -40,27 +42,4 @@ var Scan = cli.Command{
 			Destination: &model.BaseModel.TimeOut,
 		},
 	},
-}
-
-func stringFlag(name, value, usage string) cli.StringFlag {
-	return cli.StringFlag{
-		Name:  name,
-		Value: value,
-		Usage: usage,
-	}
-}
-
-func boolFlag(name, usage string) cli.BoolFlag {
-	return cli.BoolFlag{
-		Name:  name,
-		Usage: usage,
-	}
-}
-
-func intFlag(name string, value int, usage string) cli.IntFlag {
-	return cli.IntFlag{
-		Name:  name,
-		Value: value,
-		Usage: usage,
-	}
 }

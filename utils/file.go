@@ -117,19 +117,6 @@ func ReadRowToSet(file string) ([]string, error) {
 		return nil, e
 	}
 	defer open.Close()
-	//reader := bufio.NewReader(open)
-	//for {
-	//	s, e := reader.ReadString('\n')
-	//	if e != nil && e != io.EOF {
-	//		break
-	//	}
-	//	result = append(result, s)
-	//	if e == io.EOF {
-	//		break
-	//	}
-	//}
-	//return result, nil
-
 	// 优化
 	scanner := bufio.NewScanner(open)
 	for scanner.Scan() {

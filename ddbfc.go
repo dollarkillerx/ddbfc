@@ -8,16 +8,15 @@ package main
 
 import (
 	"ddbf/cmd"
-	"github.com/urfave/cli"
 	"log"
 	"os"
-	"runtime/pprof"
-	"time"
+
+	"github.com/urfave/cli"
 )
 
 func main() {
 	// 进行性能分析
-	go scp()
+	//go scp()
 
 	app := cli.NewApp()
 	app.Name = "DdbFC"
@@ -37,15 +36,15 @@ func main() {
 
 }
 
-func scp() {
-	cpuf, e := os.Create("cpu_profile")
-	if e != nil {
-		log.Fatalln(e)
-	}
-	pprof.StartCPUProfile(cpuf)
-
-	time.Sleep(30 * time.Second)
-	defer pprof.StopCPUProfile()
-
-	log.Println("关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||")
-}
+//func scp() {
+//	cpuf, e := os.Create("cpu_profile")
+//	if e != nil {
+//		log.Fatalln(e)
+//	}
+//	pprof.StartCPUProfile(cpuf)
+//
+//	time.Sleep(10 * time.Second)
+//	defer pprof.StopCPUProfile()
+//
+//	log.Println("关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||")
+//}
