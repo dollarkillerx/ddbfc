@@ -28,6 +28,15 @@ var dnsList = []string{
 	"9.9.9.10",
 	"208.67.222.222",
 	"208.67.220.220",
+
+	"77.88.8.8",
+	"77.88.8.1",
+	"156.154.70.22",
+	"156.154.71.22",
+	"216.146.36.36",
+	"216.146.35.35",
+	"4.2.2.2",
+	"4.2.2.1",
 }
 
 // 高效dns连接池
@@ -43,14 +52,13 @@ var NoDomain = errors.New("NoDomain")
 var TimeOut = errors.New("TimeOut")
 
 // 解析域名  是否存在,本次查询是否出错
-func (d *DnsCoon) DnsParse(ctx context.Context, domain string) error {
+func (d *DnsCoon) DnsParse(ctx context.Context, domain string) (string, error) {
 	chaEr := make(chan error, 1)
 	go func(chaEr chan error) {
 		msg := &dns.Msg{}
 		// 创建一个查询消息体
 		msg.SetQuestion(dns.Fqdn(domain), dns.TypeA)
 		// 与当前dns建立连接
-
 		e := d.dns.SetWriteDeadline(time.Now().Add(time.Millisecond * 200))
 		if e != nil {
 			chaEr <- e
@@ -88,9 +96,9 @@ func (d *DnsCoon) DnsParse(ctx context.Context, domain string) error {
 	for {
 		select {
 		case <-ctx.Done():
-			return TimeOut
+			return d.host, TimeOut
 		case err := <-chaEr:
-			return err
+			return d.host, err
 		}
 	}
 }

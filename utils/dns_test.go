@@ -30,7 +30,7 @@ func TestDnsParsing(t *testing.T) {
 			panic(e)
 		}
 		timeout, _ := context.WithTimeout(context.TODO(), time.Second)
-		e = coon.DnsParse(timeout, domain)
+		_, e = coon.DnsParse(timeout, domain)
 		ec := ReleaseDns(coon)
 		if ec != nil {
 			log.Fatalln(ec)

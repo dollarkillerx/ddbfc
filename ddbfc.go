@@ -11,6 +11,8 @@ import (
 	"github.com/urfave/cli"
 	"log"
 	"os"
+	"runtime/pprof"
+	"time"
 )
 
 func main() {
@@ -35,15 +37,26 @@ func main() {
 
 }
 
-//func scp() {
-//	cpuf, e := os.Create("cpu_profile")
-//	if e != nil {
-//		log.Fatalln(e)
-//	}
-//	pprof.StartCPUProfile(cpuf)
-//
-//	time.Sleep(10 * time.Second)
-//	defer pprof.StopCPUProfile()
-//
-//	log.Println("关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||")
-//}
+func scp() {
+	cpuf, e := os.Create("cpu_profile")
+	if e != nil {
+		log.Fatalln(e)
+	}
+	pprof.StartCPUProfile(cpuf)
+
+	time.Sleep(10 * time.Second)
+	defer pprof.StopCPUProfile()
+
+	log.Println("关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||  CPU")
+
+	memf, err := os.Create("mem_profile")
+	if err != nil {
+		log.Fatal("could not create memory profile: ", err)
+	}
+	if err := pprof.WriteHeapProfile(memf); err != nil {
+		log.Fatal("could not write memory profile: ", err)
+	}
+	memf.Close()
+
+	log.Println("关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析||| MEMF")
+}

@@ -144,7 +144,7 @@ loop:
 				}
 				timeout, _ := context.WithTimeout(context.TODO(), time.Millisecond*200)
 
-				err = pool.DnsParse(timeout, domain)
+				_, err = pool.DnsParse(timeout, domain)
 				//使用完后放回
 				if err := utils.ReleaseDns(pool); err != nil {
 					panic(err)
@@ -176,7 +176,9 @@ loop:
 							continue
 						}
 					}
-
+					//if err == utils.TimeOut {
+					//	log.Println(host)
+					//}
 					// 进入这里的多半是 超时
 					bug <- domain
 					continue
@@ -209,7 +211,8 @@ func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, lens int, bus chan string, out chan string) {
 	defer wg.Done()
 
-	ticker := time.NewTicker(time.Second)
+	one := time.NewTicker(time.Second)
+	wu := time.NewTicker(time.Second * 5)
 	go func() {
 		file, err := os.Create(model.BaseModel.OutFile)
 		if err != nil {
@@ -221,13 +224,8 @@ func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, lens int, bus chan 
 	loop:
 		for {
 			select {
-			case <-ticker.C:
+			case <-one.C:
 				val := atomic.LoadUint64(&jsq)
-				fmt.Println("=======================")
-				fmt.Println("已完成任务数: ", val)
-				fmt.Println("总任务数: ", lens)
-				fmt.Println("=======================")
-
 				if int(val) >= lens+1 {
 					log.Println("===============================", val)
 					// 程序完结
@@ -238,6 +236,12 @@ func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, lens int, bus chan 
 					log.Println(">>>>>>>>>>>>程序完结End<<<<<<<<<<<<<<")
 					close(model.BaseModel.DomainEnd)
 				}
+			case <-wu.C:
+				val := atomic.LoadUint64(&jsq)
+				fmt.Println("=======================")
+				fmt.Println("已完成任务数: ", val)
+				fmt.Println("总任务数: ", lens)
+				fmt.Println("=======================")
 			case <-model.BaseModel.DomainEnd:
 				close(bus)
 				close(out)
