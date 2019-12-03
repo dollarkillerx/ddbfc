@@ -41,5 +41,16 @@ var Scan = cli.Command{
 			Usage:       "Single DNS query timeout Millisecond",
 			Destination: &model.BaseModel.TimeOut,
 		},
+		cli.StringFlag{
+			Name:        "outfile, o",
+			Value:       "domain.list",
+			Usage:       "Output file address",
+			Destination: &model.BaseModel.OutFile,
+		},
+		cli.BoolFlag{
+			Name:        "death, de",
+			Usage:       "死磕到底",
+			Destination: &model.BaseModel.Death,
+		},
 	},
 }

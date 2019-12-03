@@ -7,6 +7,7 @@
 package cmd
 
 import (
+	"context"
 	"ddbf/model"
 	"ddbf/utils"
 	"fmt"
@@ -39,12 +40,23 @@ func EngineInit() {
 	engine.Run()
 }
 
+//var ac int64
+
 func (e *Engine) Run() {
 	e.initDic() // 初始化字典
 	log.Println("[200 OK] 字典初始化完毕")
 	log.Println("[200 OK] 进入暴力破解周期")
 	log.Println("当前系统并发数: ", model.BaseModel.Max)
 	log.Println("当前系统尝试次数: ", model.BaseModel.TryNum)
+	//go func() {
+	//	for {
+	//		select {
+	//		case <-time.After(time.Second):
+	//			fmt.Println("    ::::     ", runtime.NumGoroutine())
+	//			fmt.Println(atomic.LoadInt64(&ac))
+	//		}
+	//	}
+	//}()
 	e.start() // 开启爆破任务
 }
 
@@ -120,6 +132,7 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string, out chan string) {
 	defer func() {
 		wg.Done()
 	}()
+loop:
 	for {
 		select {
 		case domain, ok := <-bug:
@@ -129,20 +142,41 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string, out chan string) {
 				if err != nil {
 					log.Panic(err)
 				}
+				timeout, _ := context.WithTimeout(context.TODO(), time.Millisecond*200)
 
-				err = pool.DnsParse(domain)
-				// 使用完后放回
+				err = pool.DnsParse(timeout, domain)
+				//使用完后放回
 				if err := utils.ReleaseDns(pool); err != nil {
 					panic(err)
 				}
 
+				//coon, err := utils.GetRandDnsCoon()
+				//if err != nil {
+				//	panic(err)
+				//}
+				//timeout, _ := context.WithTimeout(context.TODO(), time.Millisecond*200)
+				//
+				//err = coon.DnsParse(timeout, domain)
+
+				//atomic.AddInt64(&ac, 1)
+
 				if err != nil {
 					// 如果本次查询错误
-					if err.Error() == "dns: bad rdata" || err == utils.NoDomain {
-						// 如果这个域名是没有效果的
-						atomic.AddUint64(&jsq, 1)
-						continue
+					switch model.BaseModel.Death {
+					case true:
+						if err.Error() == "dns: bad rdata" || err == utils.NoDomain {
+							// 如果这个域名是没有效果的
+							atomic.AddUint64(&jsq, 1)
+							continue
+						}
+					default:
+						if err.Error() == "dns: bad rdata" || err == utils.NoDomain || err == utils.TimeOut {
+							// 如果这个域名是没有效果的
+							atomic.AddUint64(&jsq, 1)
+							continue
+						}
 					}
+
 					// 进入这里的多半是 超时
 					bug <- domain
 					continue
@@ -153,7 +187,7 @@ func (e *Engine) task(wg *sync.WaitGroup, bug chan string, out chan string) {
 				// 如果可行 写入到domain中
 				out <- domain
 			} else {
-				return
+				break loop
 			}
 		}
 	}
@@ -177,17 +211,25 @@ func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, lens int, bus chan 
 
 	ticker := time.NewTicker(time.Second)
 	go func() {
+		file, err := os.Create(model.BaseModel.OutFile)
+		if err != nil {
+			log.Println("文件创建失败")
+			log.Println(model.BaseModel.OutFile)
+			panic(err)
+		}
+		defer file.Close()
+	loop:
 		for {
 			select {
 			case <-ticker.C:
-
 				val := atomic.LoadUint64(&jsq)
 				fmt.Println("=======================")
 				fmt.Println("已完成任务数: ", val)
 				fmt.Println("总任务数: ", lens)
 				fmt.Println("=======================")
 
-				if int(val) >= lens-600 && len(bus) == 0 {
+				if int(val) >= lens+1 {
+					log.Println("===============================", val)
 					// 程序完结
 					time.Sleep(time.Millisecond * 200)
 					log.Println(">>>>>>>>>>>>程序完结<<<<<<<<<<<<<<")
@@ -195,28 +237,18 @@ func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, lens int, bus chan 
 					log.Println("总耗时: ", time.Since(tic))
 					log.Println(">>>>>>>>>>>>程序完结End<<<<<<<<<<<<<<")
 					close(model.BaseModel.DomainEnd)
-
 				}
 			case <-model.BaseModel.DomainEnd:
 				close(bus)
 				close(out)
-				os.Exit(0)
-				return
+				break loop
 			case domain := <-out:
-				log.Printf("成功: %v", domain)
+				dom := fmt.Sprintf("成功: %v\n", domain)
+				_, err := file.WriteString(dom)
+				if err != nil {
+					log.Println("文件写入失败")
+				}
 			}
 		}
 	}()
-
-	// 定时打印
-	//for {
-	//	select {
-	//	case <-model.BaseModel.DomainEnd:
-	//		close(bus)
-	//		close(out)
-	//		return
-	//	case domain := <-out:
-	//		log.Printf("成功: %v", domain)
-	//	}
-	//}
 }

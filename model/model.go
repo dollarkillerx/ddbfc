@@ -19,6 +19,8 @@ type baseModel struct {
 	TimeOut int     // 查询超时
 	TryNum  int     // 尝试次数
 	Max     int     // 最大并发数量
+	OutFile string  // 输出文件
+	Death   bool    // 基础扫描 or 死磕到底
 
 	DomainQueue *queue.Queue
 	DomainEnd   chan bool

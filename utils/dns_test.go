@@ -7,6 +7,7 @@
 package utils
 
 import (
+	"context"
 	"log"
 	"testing"
 	"time"
@@ -28,15 +29,19 @@ func TestDnsParsing(t *testing.T) {
 		if e != nil {
 			panic(e)
 		}
-		b, e := coon.DnsParse(domain)
+		timeout, _ := context.WithTimeout(context.TODO(), time.Second)
+		e = coon.DnsParse(timeout, domain)
 		ec := ReleaseDns(coon)
 		if ec != nil {
 			log.Fatalln(ec)
 		}
-		if e != nil {
-			log.Fatalln(e)
-		}
-		if b {
+		//if e != nil && e != NoDomain {
+		//	continue
+		//	log.Fatalln(e)
+		//} else {
+		//	log.Println(domain)
+		//}
+		if e == nil {
 			log.Println(domain)
 		}
 	}

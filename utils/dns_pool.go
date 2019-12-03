@@ -7,6 +7,7 @@
 package utils
 
 import (
+	"context"
 	"ddbf/model"
 	"encoding/json"
 	"errors"
@@ -39,41 +40,58 @@ type DnsCoon struct {
 }
 
 var NoDomain = errors.New("NoDomain")
+var TimeOut = errors.New("TimeOut")
 
 // 解析域名  是否存在,本次查询是否出错
-func (d *DnsCoon) DnsParse(domain string) error {
-	msg := &dns.Msg{}
-	// 创建一个查询消息体
-	msg.SetQuestion(dns.Fqdn(domain), dns.TypeA)
-	// 与当前dns建立连接
+func (d *DnsCoon) DnsParse(ctx context.Context, domain string) error {
+	chaEr := make(chan error, 1)
+	go func(chaEr chan error) {
+		msg := &dns.Msg{}
+		// 创建一个查询消息体
+		msg.SetQuestion(dns.Fqdn(domain), dns.TypeA)
+		// 与当前dns建立连接
 
-	e := d.dns.SetWriteDeadline(time.Now().Add(time.Second))
-	if e != nil {
-		return e
-	}
-
-	// 发送查询数据
-	e = d.dns.WriteMsg(msg)
-	if e != nil {
-		return e
-
-	}
-
-	// 以下是接受数据阶段
-	readMsg, e := d.dns.ReadMsg()
-	if e != nil || len(readMsg.Question) == 0 {
-		// 如果没有数据
+		e := d.dns.SetWriteDeadline(time.Now().Add(time.Millisecond * 200))
 		if e != nil {
-			return e
-
-		} else {
-			return errors.New("not data")
+			chaEr <- e
+			return
 		}
-	}
-	if len(readMsg.Answer) == 0 {
-		return NoDomain
-	} else {
-		return nil
+
+		// 发送查询数据
+		e = d.dns.WriteMsg(msg)
+		if e != nil {
+			chaEr <- e
+			return
+		}
+
+		// 以下是接受数据阶段
+		readMsg, e := d.dns.ReadMsg()
+		if e != nil || len(readMsg.Question) == 0 {
+			// 如果没有数据
+			if e != nil {
+				chaEr <- e
+				return
+			} else {
+				chaEr <- errors.New("not data")
+				return
+			}
+		}
+		if len(readMsg.Answer) == 0 {
+			chaEr <- NoDomain
+			return
+		} else {
+			chaEr <- nil
+			return
+		}
+	}(chaEr)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return TimeOut
+		case err := <-chaEr:
+			return err
+		}
 	}
 }
 
@@ -109,6 +127,18 @@ func init() {
 	}
 }
 
+func GetRandDnsCoon() (*DnsCoon, error) {
+	conn, s, e := getRandDnsCoon()
+	if e != nil {
+		return nil, e
+	}
+	return &DnsCoon{
+		dns:     conn,
+		version: 0,
+		host:    s,
+	}, nil
+}
+
 // 获取随机dns连接
 func getRandDnsCoon() (*dns.Conn, string, error) {
 	rand.Seed(time.Now().UnixNano())
@@ -123,8 +153,8 @@ func GetDnsByPool(timeout time.Duration) (*DnsCoon, error) {
 	select {
 	case dns := <-DnsPool.bufChan:
 		return dns, nil
-	case <-time.After(timeout):
-		return nil, errors.New("time out")
+		//case <-time.After(timeout):
+		//	return nil, errors.New("time out")
 	}
 }
 
