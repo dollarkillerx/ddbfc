@@ -7,13 +7,17 @@
 package service
 
 import (
+	"bufio"
 	"ddbf/Master/definition"
 	"ddbf/Master/shared"
 	"ddbf/Master/utils"
+	"ddbf/pb/pb_work"
 	"github.com/dollarkillerx/easyutils"
+	"github.com/dollarkillerx/easyutils/clog"
 	"github.com/gin-gonic/gin"
 	"github.com/saracen/fastzip"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -97,5 +101,53 @@ func Task(ctx *gin.Context) {
 
 // 分发任务
 func subcontract(key, domain, unzipPath string) {
+	dirs, e := ioutil.ReadDir(unzipPath)
+	if e != nil {
+		clog.PrintWa(e)
+		<-shared.LimitChannel
+		return
+	}
 
+	task := pb_work.Request{TaskId: key, TaskItem: []string{}}
+	taskNum := 0 // 初始化任务个数
+	log.Printf("进入分包阶段 taskId: %s domain: %s  INFOS：%s\n", key, domain, dirs)
+	taskStatistics := definition.Task{Id: key, Num: 0}
+	shared.TaskNum[key] = &taskStatistics // 初始化
+	for _, v := range dirs {
+		if !v.IsDir() {
+			dirName := filepath.Join(unzipPath, v.Name())
+			file, e := os.Open(dirName)
+			if e != nil {
+				clog.PrintWa(e)
+				continue
+			}
+			defer file.Close()
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				task.TaskItem = append(task.TaskItem, scanner.Text()+"."+domain) // 拼接域名
+
+				if len(task.TaskItem) == 120000 { // 单个任务包的大小1.2W
+					taskNum++
+					shared.TaskNum[key].Num = taskNum
+
+					shared.TaskPool <- task // 发送给任务队列
+					// 重置task item
+					task.TaskItem = make([]string, 0)
+				}
+			}
+		}
+	}
+	// 如果任务大小没有到120000就会进入这里
+	if len(task.TaskItem) > 0 {
+		taskNum++
+		shared.TaskNum[key].Num = taskNum
+		shared.TaskPool <- task // 发送给任务队列
+	}
+	log.Printf("当前任务 %s  以及全部发送完毕!!! 200 OK", key)
+	shared.TaskNum[key].Over = true
+
+	// 删除字典目录
+	if e := os.RemoveAll(unzipPath); e != nil {
+		clog.PrintWa(e)
+	}
 }

@@ -14,5 +14,5 @@ import (
 
 func Registered(app *gin.Engine) {
 	app.POST("/task", middleware.TaskLimit, middleware.TaskValidate, service.Task) // 上传后返回任务的唯一ID
-	app.GET("/report/:id", )                                                                          // 更具id获取任务报告
+	app.GET("/report/:id")                                                         // 更具id获取任务报告
 }
