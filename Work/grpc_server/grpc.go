@@ -18,6 +18,7 @@ type server struct {
 }
 
 func (s *server) Task(ctx context.Context, req *pb_work.Request) (*pb_work.Response, error) {
+
 	return &pb_work.Response{}, nil
 }
 

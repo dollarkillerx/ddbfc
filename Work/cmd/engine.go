@@ -11,7 +11,6 @@ import (
 	"ddbf/Work/model"
 	"ddbf/Work/utils"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -19,13 +18,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-)
-
-// 相关基础定义
-const (
-	dicDir  = "dic"                                                                    // 字典文件所在目录
-	dicPath = "dic/base.dic"                                                           // 字典文件路径
-	dicUlr  = "https://raw.githubusercontent.com/dollarkillerx/ddbfc/cli/dic/base.dic" // 字典文件Url地址
 )
 
 /**
@@ -49,42 +41,6 @@ func (e *Engine) Run() {
 	log.Println("当前系统并发数: ", model.BaseModel.Max)
 	log.Println("当前系统尝试次数: ", model.BaseModel.TryNum)
 	e.start() // 开启爆破任务
-}
-
-// 初始化字典
-func (e *Engine) initDic() {
-	// 检测dic目录 是否为空,如果为空 使用默认字典
-	empty := utils.FileDirEmpty(dicDir)
-	if empty {
-		// 为空 使用默认字典
-		e.defaultDic()
-	}
-	// 读取dic目录下的字典 写入到 字典set中
-	sets, err := utils.LoopDir(dicDir)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	model.BaseModel.Dic = sets
-}
-
-// 如果没有字典就从github下载默认字典
-func (e *Engine) defaultDic() {
-	err := utils.DirPing(dicDir)
-	if err != nil {
-		log.Fatalln("Directory creation failed")
-	}
-	// 向github下载最新的默认字典
-	easyHttp := utils.EasyHttpNew()
-	bytes, err := easyHttp.Get(dicUlr)
-	if err != nil {
-		log.Fatalln("GitHub download default dictionary failed")
-	}
-
-	// 默认字典下载完毕 存入其中
-	err = ioutil.WriteFile(dicPath, bytes, 000755)
-	if err != nil {
-		log.Fatalln(err)
-	}
 }
 
 // 开启爆破任务
