@@ -44,7 +44,7 @@ func scp() {
 	}
 	pprof.StartCPUProfile(cpuf)
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(60 * time.Second)
 	defer pprof.StopCPUProfile()
 
 	log.Println("关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||关闭分析|||  CPU")

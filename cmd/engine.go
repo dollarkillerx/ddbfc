@@ -98,10 +98,10 @@ func (e *Engine) defaultDic() {
 
 // 开启爆破任务
 func (e *Engine) start() {
-	t := time.Now()                                 // 计时器
-	len := model.BaseModel.Dic.Len()                // 本次执行的消息总数
-	bus := make(chan string, len/10)                // 任务总线
-	out := make(chan string, model.BaseModel.Max*2) // 输出
+	t := time.Now()                                   // 计时器
+	len := model.BaseModel.Dic.Len()                  // 本次执行的消息总数
+	bus := make(chan string, len/10)                  // 任务总线
+	out := make(chan []string, model.BaseModel.Max*2) // 输出
 
 	wg := &sync.WaitGroup{}
 	wg.Add(model.BaseModel.Max + 2)
@@ -128,7 +128,7 @@ type DnsResult struct {
 
 var jsq uint64
 
-func (e *Engine) task(wg *sync.WaitGroup, bug chan string, out chan string) {
+func (e *Engine) task(wg *sync.WaitGroup, bug chan string, out chan []string) {
 	defer func() {
 		wg.Done()
 	}()
@@ -144,7 +144,7 @@ loop:
 				}
 				timeout, _ := context.WithTimeout(context.TODO(), time.Millisecond*200)
 
-				_, err = pool.DnsParse(timeout, domain)
+				dnsHost, err := pool.DnsParse(timeout, domain)
 				//使用完后放回
 				if err := utils.ReleaseDns(pool); err != nil {
 					panic(err)
@@ -187,7 +187,8 @@ loop:
 				atomic.AddUint64(&jsq, 1)
 				// 如果这个域名是有效的
 				// 如果可行 写入到domain中
-				out <- domain
+				re := []string{domain, dnsHost}
+				out <- re
 			} else {
 				break loop
 			}
@@ -208,7 +209,7 @@ func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 }
 
 // 打印日志
-func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, lens int, bus chan string, out chan string) {
+func (e *Engine) printLog(wg *sync.WaitGroup, tic time.Time, lens int, bus chan string, out chan []string) {
 	defer wg.Done()
 
 	one := time.NewTicker(time.Second)
