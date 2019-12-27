@@ -48,15 +48,6 @@ func (e *Engine) Run() {
 	log.Println("[200 OK] 进入暴力破解周期")
 	log.Println("当前系统并发数: ", model.BaseModel.Max)
 	log.Println("当前系统尝试次数: ", model.BaseModel.TryNum)
-	//go func() {
-	//	for {
-	//		select {
-	//		case <-time.After(time.Second):
-	//			fmt.Println("    ::::     ", runtime.NumGoroutine())
-	//			fmt.Println(atomic.LoadInt64(&ac))
-	//		}
-	//	}
-	//}()
 	e.start() // 开启爆破任务
 }
 
@@ -150,16 +141,6 @@ loop:
 					panic(err)
 				}
 
-				//coon, err := utils.GetRandDnsCoon()
-				//if err != nil {
-				//	panic(err)
-				//}
-				//timeout, _ := context.WithTimeout(context.TODO(), time.Millisecond*200)
-				//
-				//err = coon.DnsParse(timeout, domain)
-
-				//atomic.AddInt64(&ac, 1)
-
 				if err != nil {
 					// 如果本次查询错误
 					switch model.BaseModel.Death {
@@ -176,10 +157,6 @@ loop:
 							continue
 						}
 					}
-					//if err == utils.TimeOut {
-					//	log.Println(host)
-					//}
-					// 进入这里的多半是 超时
 					bug <- domain
 					continue
 				}
@@ -202,10 +179,8 @@ func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
 	bus <- model.BaseModel.Domain
 	for k := range model.BaseModel.Dic {
 		domain := strings.TrimSpace(k) + "." + strings.TrimSpace(model.BaseModel.Domain)
-		//log.Println(domain)
 		bus <- domain
 	}
-	//close(bus)
 }
 
 // 打印日志

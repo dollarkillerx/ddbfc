@@ -87,6 +87,7 @@ func RunServer(host string) {
 	server := grpc.NewServer()
 	pb_master.RegisterReportServer(server, &report{})
 	pb_master.RegisterRegisteredWorkServer(server, &discovery{})
+	go heartbeatCheck() // 心跳检测
 	if e = server.Serve(listener); e != nil {
 		log.Fatalln(e)
 	}
