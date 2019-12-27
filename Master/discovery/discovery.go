@@ -12,9 +12,12 @@ import (
 	"ddbf/Master/shared"
 	"ddbf/pb/pb_master"
 	"github.com/dollarkillerx/easyutils"
+	"github.com/dollarkillerx/easyutils/clog"
 	"google.golang.org/grpc"
 	"log"
 	"net"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -54,6 +57,7 @@ func (d *discovery) Register(ctx context.Context, request *pb_master.DiscoveryRe
 			v.Load = request.Load
 			v.TimeOut = time.Now().Add(time.Millisecond * 400)
 			v.TryNum = 0
+			break
 		}
 	}
 	if !foundIt {
@@ -76,7 +80,41 @@ func (d *discovery) Register(ctx context.Context, request *pb_master.DiscoveryRe
 }
 
 func (r *report) Report(ctx context.Context, request *pb_master.TaskReport) (*pb_master.TaskResponse, error) {
-	return &pb_master.TaskResponse{}, nil
+	log.Printf("任务入库200OK TaskId: %s", request.TaskId)
+	_, ex := shared.TaskRun[request.WorkId]
+	if !ex {
+		// 如果不存在丢弃这个数据包
+		return &pb_master.TaskResponse{
+			StatusCode: 200,
+		}, nil
+	}
+
+	task := shared.TaskNum[request.TaskId]
+	task.Lock()
+	defer task.Unlock()
+	task.OverNum++
+	file, e := getFile(request.TaskId)
+	if e != nil {
+		clog.PrintWa(e)
+		return &pb_master.TaskResponse{
+			StatusCode: 500,
+		}, nil
+	}
+	defer file.Close()
+	for _, v := range request.TaskItem {
+		file.WriteString(v.Domain + "  :  " + v.DnsHost + "\n")
+	}
+
+	if task.Over {
+		if task.OverNum >= task.Num {
+			<-shared.LimitChannel
+			file.WriteString("Over 处理完毕 \n")
+		}
+	}
+
+	return &pb_master.TaskResponse{
+		StatusCode: 200,
+	}, nil
 }
 
 func RunServer(host string) {
@@ -117,12 +155,17 @@ func heartbeatCheck() {
 								} else {
 									shared.ServerPool = shared.ServerPool[:k]
 								}
+								break
 							}
 						}
 						shared.ServerPoolRw.Unlock()
 
 						// 如果这个超时服务 有任务  就把这个任务放回到原来的任务队列中
-
+						task, ex := shared.TaskRun[v.Id]
+						if ex {
+							shared.TaskPool <- *task.Data
+							delete(shared.TaskRun, v.Id)
+						}
 					}
 				} else {
 					v.TryNum = 0 // 如果没有超时 清空他的超时记录
@@ -130,4 +173,10 @@ func heartbeatCheck() {
 			}
 		}
 	}
+}
+
+// 如果日志文件不存在就创建日志文件
+func getFile(id string) (*os.File, error) {
+	filepath := filepath.Join(definition.OUTFILE, id+".txt")
+	return os.OpenFile(filepath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 00666)
 }

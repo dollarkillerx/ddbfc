@@ -16,3 +16,6 @@ var TaskNum = make(map[string]*definition.Task)
 
 // 任务池
 var TaskPool = make(chan pb_work.Request, 100)
+
+// 任务表   那个服务正在执行什么任务
+var TaskRun = make(map[string]*definition.TaskItemR) // 服务id ： 服务

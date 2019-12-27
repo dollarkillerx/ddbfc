@@ -5,7 +5,7 @@ package pb_work;
 message Request {
     string task_id = 1; // 当前任务的id
 
-    repeated string task_item = 3; // 结果集
+    repeated string task_item = 2; // 当前任务
 }
 
 message Response {

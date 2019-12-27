@@ -26,9 +26,10 @@ message DomainItem {
 
 message TaskReport {
     string task_id = 1; // 任务id
-    int64 task_num = 2; // 任务包体编号
+    string work_id = 2; // 服务id
+    int64 task_num = 3; // 任务包体编号
 
-    repeated DomainItem task_item = 3; // 验证过的数据
+    repeated DomainItem task_item = 4; // 验证过的数据
 }
 
 message TaskResponse {

@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	ZIPFILE = "zipFile"
-
+	ZIPFILE   = "zipFile"
 	UNZIPFILE = "unzipFile"
+	OUTFILE   = "outFile"
 )
 
 // 初始化目录
@@ -24,6 +24,10 @@ func init() {
 		log.Fatalln(err, "文件初始化失败")
 	}
 	err = easyutils.DirPing(UNZIPFILE)
+	if err != nil {
+		log.Fatalln(err, "文件初始化失败")
+	}
+	err = easyutils.DirPing(OUTFILE)
 	if err != nil {
 		log.Fatalln(err, "文件初始化失败")
 	}
