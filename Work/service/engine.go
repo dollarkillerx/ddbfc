@@ -26,7 +26,6 @@ func InitWorkDispatch(domains []string) {
 	wg := &sync.WaitGroup{}
 	wg.Add(1002)
 
-
 	go initChannel(wg, bus, domains)
 
 	go checkOver(wg, total, bus, out)
@@ -74,10 +73,10 @@ loop:
 					if err.Error() == "dns: bad rdata" || err == utils.NoDomain || err == utils.TimeOut {
 						// 如果这个域名是没有效果的
 						atomic.AddUint64(&jsq, 1)
-						continue
+						continue loop
 					}
 					bus <- domain
-					continue
+					continue loop
 				}
 
 				atomic.AddUint64(&jsq, 1)
@@ -129,6 +128,7 @@ func checkOver(wg *sync.WaitGroup, total int, bus chan string, out chan *pb_mast
 				//close(out)
 				close(bus)
 				shared.Over <- result
+				jsq = 0
 				return
 			}
 		}
