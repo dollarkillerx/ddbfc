@@ -8,6 +8,8 @@ package grpc_server
 
 import (
 	"context"
+	"ddbf/Work/service"
+	"ddbf/Work/shared"
 	"ddbf/pb/pb_work"
 	"google.golang.org/grpc"
 	"log"
@@ -18,9 +20,37 @@ type server struct {
 }
 
 func (s *server) Task(ctx context.Context, req *pb_work.Request) (*pb_work.Response, error) {
+	shared.LoadRw.RLock()
+	ac := shared.Load
+	shared.LoadRw.Unlock()
+	if ac != 0 {
+		return &pb_work.Response{
+			StatusCode: 2503,
+		}, nil
+	}
 
-	return &pb_work.Response{}, nil
+	// 如果服务还没有负载
+	shared.LoadRw.Lock()
+	shared.Load++
+	shared.LoadRw.Unlock()
+
+	// 接入数据
+	shared.TaskId = req.TaskId
+
+	// 注入数据
+	go service.InitWorkDispatch(req.TaskItem)
+
+	return &pb_work.Response{
+		StatusCode: 200,
+	}, nil
 }
+
+//func insertData(items []string) {
+//	shared.TaskNum = len(items)
+//	for _, v := range items {
+//		shared.TaskChannel <- v
+//	}
+//}
 
 func RunServer(host string) {
 	listener, e := net.Listen("tcp", host)

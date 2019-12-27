@@ -6,6 +6,17 @@
  */
 package shared
 
-import "ddbf/Work/definition"
+import (
+	"ddbf/pb/pb_master"
+)
 
-var Over = make(chan []*definition.DomainItem, 1)
+var Over = make(chan []*pb_master.DomainItem, 1)
+
+//// 消息
+//var TaskChannel = make(chan string, 10000)
+//
+//// 处理完毕的消息
+//var OverChannel = make(chan *definition.DomainItem, 5000)
+//
+//// 当前处理完消息数
+//var OverNum int64 = 0

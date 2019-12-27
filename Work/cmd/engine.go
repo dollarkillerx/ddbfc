@@ -20,29 +20,6 @@ import (
 	"time"
 )
 
-/**
- * 优化思路 减少锁的开销
- */
-
-type Engine struct {
-}
-
-func EngineInit() {
-	engine := Engine{}
-	engine.Run()
-}
-
-//var ac int64
-
-func (e *Engine) Run() {
-	e.initDic() // 初始化字典
-	log.Println("[200 OK] 字典初始化完毕")
-	log.Println("[200 OK] 进入暴力破解周期")
-	log.Println("当前系统并发数: ", model.BaseModel.Max)
-	log.Println("当前系统尝试次数: ", model.BaseModel.TryNum)
-	e.start() // 开启爆破任务
-}
-
 // 开启爆破任务
 func (e *Engine) start() {
 	t := time.Now()                                   // 计时器
@@ -126,16 +103,6 @@ loop:
 				break loop
 			}
 		}
-	}
-}
-
-// 初始化chan
-func (e *Engine) initChan(wg *sync.WaitGroup, bus chan string) {
-	defer wg.Done()
-	bus <- model.BaseModel.Domain
-	for k := range model.BaseModel.Dic {
-		domain := strings.TrimSpace(k) + "." + strings.TrimSpace(model.BaseModel.Domain)
-		bus <- domain
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"context"
 	"ddbf/Work/discovery"
 	"ddbf/Work/grpc_server"
+	"ddbf/Work/service"
 	"ddbf/Work/shared"
 	"ddbf/Work/utils"
 	"ddbf/pb/pb_master"

@@ -8,7 +8,6 @@ package utils
 
 import (
 	"context"
-	"ddbf/Work/model"
 	"encoding/json"
 	"errors"
 	"math/rand"
@@ -101,12 +100,12 @@ var dnsNum = 1000 // 设在池容量
 
 // 初始化dns连接池
 func init() {
-	if model.BaseModel.Max > 2000 {
-		cs := model.BaseModel.Max / 2
-		if cs > 1000 {
-			dnsNum = cs
-		}
-	}
+	//if model.BaseModel.Max > 2000 {
+	//	cs := model.BaseModel.Max / 2
+	//	if cs > 1000 {
+	//		dnsNum = cs
+	//	}
+	//}
 
 	// 初始化池
 	DnsPool = &dnsPool{bufChan: make(chan *DnsCoon, dnsNum)}
