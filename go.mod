@@ -13,6 +13,7 @@ require (
 	github.com/miekg/dns v1.1.22
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/saracen/fastzip v0.0.0-20191205190837-d850ff940ac1 // indirect
 	github.com/urfave/cli v1.22.2
 	golang.org/x/net v0.0.0-20191125084936-ffdde1057850 // indirect
 	golang.org/x/sys v0.0.0-20191224085550-c709ea063b76 // indirect
