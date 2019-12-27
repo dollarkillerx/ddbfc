@@ -9,6 +9,7 @@ package main
 import (
 	"ddbf/Master/discovery"
 	"ddbf/Master/router"
+	"ddbf/Master/service"
 	"github.com/gin-gonic/gin"
 	"log"
 	"os"
@@ -27,6 +28,7 @@ func main() {
 	router.Registered(app)  // 注册路由
 
 	go discovery.RunServer(rpcHost) // 注册 rpc服务器
+	go service.Dispatch()           // 调度
 
 	if err := app.Run(apiHost); err != nil {
 		log.Fatalln(err)
