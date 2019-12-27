@@ -20,20 +20,18 @@ type server struct {
 }
 
 func (s *server) Task(ctx context.Context, req *pb_work.Request) (*pb_work.Response, error) {
-	shared.LoadRw.RLock()
-	ac := shared.Load
-	shared.LoadRw.Unlock()
-	if ac != 0 {
+	shared.LoadRw.Lock()
+	defer shared.LoadRw.Unlock()
+
+	if shared.Load != 0 {
 		return &pb_work.Response{
 			StatusCode: 2503,
 		}, nil
 	}
 
 	// 如果服务还没有负载
-	shared.LoadRw.Lock()
 	shared.Load++
-	shared.LoadRw.Unlock()
-
+	log.Printf("收到任务 %s\n", req.TaskId)
 	// 接入数据
 	shared.TaskId = req.TaskId
 

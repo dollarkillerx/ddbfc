@@ -139,15 +139,41 @@ func subcontract(key, domain, unzipPath string) {
 	}
 	// 如果任务大小没有到120000就会进入这里
 	if len(task.TaskItem) > 0 {
+		log.Printf("当前任务 %s  以及全部发送完毕!!! 200 OK", key)
+		shared.TaskNum[key].Over = true
+
 		taskNum++
 		shared.TaskNum[key].Num = taskNum
 		shared.TaskPool <- task // 发送给任务队列
 	}
-	log.Printf("当前任务 %s  以及全部发送完毕!!! 200 OK", key)
-	shared.TaskNum[key].Over = true
 
 	// 删除字典目录
 	if e := os.RemoveAll(unzipPath); e != nil {
 		clog.PrintWa(e)
 	}
+}
+
+// 获取报告
+func ReportGet(ctx *gin.Context) {
+	id := ctx.Param("id")
+	if id == "" {
+		utils.RespStandard(ctx, definition.Resp400)
+		return
+	}
+	// 打开文件
+	file, e := os.Open(reportGetFile(id))
+	if e != nil {
+		utils.RespStandard(ctx, definition.Resp404)
+		return
+	}
+	defer file.Close()
+	ctx.Header("content-type", "application/json")
+	_, e = io.Copy(ctx.Writer, file)
+	if e != nil {
+		utils.RespStandard(ctx, definition.Resp404)
+	}
+}
+
+func reportGetFile(id string) string {
+	return filepath.Join(definition.OUTFILE, id+".txt")
 }

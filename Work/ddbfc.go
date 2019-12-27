@@ -10,7 +10,6 @@ import (
 	"context"
 	"ddbf/Work/discovery"
 	"ddbf/Work/grpc_server"
-	"ddbf/Work/service"
 	"ddbf/Work/shared"
 	"ddbf/Work/utils"
 	"ddbf/pb/pb_master"
@@ -37,13 +36,14 @@ func main() {
 	for {
 		select {
 		case work := <-shared.Over:
-			log.Printf("任务处理完毕: %s\n", shared.TaskId)
+			log.Printf("任务处理完毕: %s  有效域名:%d \n", shared.TaskId, len(work))
 			result := &pb_master.TaskReport{TaskId: shared.TaskId, WorkId: shared.WorkId}
 			resultItems := make([]*pb_master.DomainItem, 0)
 			for _, v := range work {
-				resultItem := &pb_master.DomainItem{DnsHost: v.Dns, Domain: v.Domain}
+				resultItem := &pb_master.DomainItem{DnsHost: v.DnsHost, Domain: v.Domain}
 				resultItems = append(resultItems, resultItem)
 			}
+			result.TaskItem = resultItems
 
 			for {
 				_, e := dis.Report(context.TODO(), result)
@@ -73,15 +73,15 @@ func heartbeat(host, rpc string) {
 	}
 	shared.WorkId = response.WorkId
 	data.WorkId = response.WorkId
-
+	log.Printf("服务注册成功 Id:%s", shared.WorkId)
 	ticker := time.NewTicker(time.Millisecond * 200)
 	for {
 		select {
 		case <-ticker.C:
 
-			shared.LoadRw.RLock()
+			shared.LoadRw.Lock()
 			data.Load = int64(shared.Load)
-			shared.LoadRw.RUnlock()
+			shared.LoadRw.Unlock()
 
 			_, e := dis.Register(context.TODO(), data)
 			if e != nil {

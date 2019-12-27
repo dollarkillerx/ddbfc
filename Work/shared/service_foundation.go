@@ -12,7 +12,7 @@ import "sync"
 var (
 	WorkId = "" // 当前服务的id
 
-	LoadRw sync.RWMutex
+	LoadRw sync.Mutex
 	Load   = 0 // 当前服务的负载
 
 	TaskId = "" // 任务的ID

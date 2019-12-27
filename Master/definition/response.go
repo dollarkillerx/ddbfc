@@ -18,6 +18,7 @@ type ResponseStandard struct {
 var (
 	RespOk  = &ResponseStandard{HttpCode: 200, Code: 200, Msg: "200 OK!"}
 	Resp400 = &ResponseStandard{HttpCode: 400, Code: 400, Msg: "400 Parameter error"}
+	Resp404 = &ResponseStandard{HttpCode: 404, Code: 404, Msg: "404 not file"}
 
 	RespBusy = &ResponseStandard{HttpCode: 200, Code: 2503, Msg: "Server is busy"}
 

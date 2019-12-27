@@ -11,6 +11,7 @@ import (
 	"ddbf/Work/shared"
 	"ddbf/Work/utils"
 	"ddbf/pb/pb_master"
+	"github.com/dollarkillerx/easyutils/clog"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -24,6 +25,7 @@ func InitWorkDispatch(domains []string) {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1002)
+
 
 	go initChannel(wg, bus, domains)
 
@@ -108,6 +110,7 @@ func checkOver(wg *sync.WaitGroup, total int, bus chan string, out chan *pb_mast
 				num := int(atomic.LoadUint64(&jsq))
 				if num >= total {
 					// 任务完毕
+					clog.PrintWa(num)
 					over <- true
 					return
 				}
