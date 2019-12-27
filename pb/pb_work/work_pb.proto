@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package pb_work;
+
+message DomainItem {
+    string domain = 1; // 爆破结束的域名
+    string dnsHost = 2; // 解析当前域名的dns
+}
+
+message Request {
+    string task_id = 1; // 当前任务的id
+
+    repeated DomainItem task_item = 3; // 结果集
+}
+
+message Response {
+    int64 status_code = 1; // 相应状态码
+}
+
+service Task {
+    rpc Task (Request) returns (Response);
+}

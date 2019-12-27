@@ -1,6 +1,6 @@
 # ddbfc
 Distributed DNS brute force cracking   分布式Dns暴力破解
-![Master](./README/master.png)
+![Master](https://s2.ax1x.com/2019/12/27/lVmgm9.png)
 
 work初始化 注册到Discory    
 master 初始化字典  将字典进行分割成任务队列  下发个给work  将当前下发任务放入执行任务中

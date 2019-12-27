@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package pb_master;
+
+// 服务发现相关定义
+message DiscoveryRequest {
+    string work_id = 1; // work id
+    string host = 2; // 服务地址
+    int64 load = 3; // 负载
+}
+
+message DiscoveryResponse {
+    string work_id = 1; // work id
+}
+
+service RegisteredWork {
+    rpc Register (DiscoveryRequest) returns (DiscoveryResponse);
+}
+// 服务发现相关定义结束
+
+// 接受work任务相关定义
+message DomainItem {
+    string domain = 1; // 爆破结束的域名
+    string dnsHost = 2; // 解析当前域名的dns
+}
+
+message TaskReport {
+    string task_id = 1; // 任务id
+    int64 task_num = 2; // 任务包体编号
+
+    repeated DomainItem task_item = 3; // 验证过的数据
+}
+
+message TaskResponse {
+    int64 status_code = 1; // 状态码
+}
+
+service Report {
+    rpc Report (TaskReport) returns (TaskResponse);
+}
+// 接受work返回定义结束
