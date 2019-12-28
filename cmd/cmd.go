@@ -35,12 +35,6 @@ var Scan = cli.Command{
 			Usage:       "Number of attempts",
 			Destination: &model.BaseModel.TryNum,
 		},
-		cli.IntFlag{
-			Name:        "timeout, t",
-			Value:       300,
-			Usage:       "Single DNS query timeout Millisecond",
-			Destination: &model.BaseModel.TimeOut,
-		},
 		cli.StringFlag{
 			Name:        "outfile, o",
 			Value:       "domain.list",
@@ -48,9 +42,9 @@ var Scan = cli.Command{
 			Destination: &model.BaseModel.OutFile,
 		},
 		cli.BoolFlag{
-			Name:        "death, de",
-			Usage:       "死磕到底",
-			Destination: &model.BaseModel.Death,
+			Name:        "mode, mo",
+			Usage:       "默认暴力破解 true开发资源扫描",
+			Destination: &model.BaseModel.Mode,
 		},
 	},
 }

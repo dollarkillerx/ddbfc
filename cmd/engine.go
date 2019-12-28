@@ -9,6 +9,7 @@ package cmd
 import (
 	"context"
 	"ddbf/model"
+	"ddbf/server"
 	"ddbf/utils"
 	"fmt"
 	"io/ioutil"
@@ -47,7 +48,6 @@ func (e *Engine) Run() {
 	log.Println("[200 OK] 字典初始化完毕")
 	log.Println("[200 OK] 进入暴力破解周期")
 	log.Println("当前系统并发数: ", model.BaseModel.Max)
-	log.Println("当前系统尝试次数: ", model.BaseModel.TryNum)
 	//go func() {
 	//	for {
 	//		select {
@@ -57,7 +57,14 @@ func (e *Engine) Run() {
 	//		}
 	//	}
 	//}()
-	e.start() // 开启爆破任务
+	fmt.Println("初始化完毕")
+
+	if model.BaseModel.Mode {
+		discovery := server.DiscoveryNew()
+		discovery.Run(model.BaseModel.Domain)
+	} else {
+		e.start() // 开启爆破任务
+	}
 }
 
 // 初始化字典
@@ -150,36 +157,14 @@ loop:
 					panic(err)
 				}
 
-				//coon, err := utils.GetRandDnsCoon()
-				//if err != nil {
-				//	panic(err)
-				//}
-				//timeout, _ := context.WithTimeout(context.TODO(), time.Millisecond*200)
-				//
-				//err = coon.DnsParse(timeout, domain)
-
-				//atomic.AddInt64(&ac, 1)
-
 				if err != nil {
 					// 如果本次查询错误
-					switch model.BaseModel.Death {
-					case true:
-						if err.Error() == "dns: bad rdata" || err == utils.NoDomain {
-							// 如果这个域名是没有效果的
-							atomic.AddUint64(&jsq, 1)
-							continue
-						}
-					default:
-						if err.Error() == "dns: bad rdata" || err == utils.NoDomain || err == utils.TimeOut {
-							// 如果这个域名是没有效果的
-							atomic.AddUint64(&jsq, 1)
-							continue
-						}
+					if err.Error() == "dns: bad rdata" || err == utils.NoDomain || err == utils.TimeOut {
+						// 如果这个域名是没有效果的
+						atomic.AddUint64(&jsq, 1)
+						continue
 					}
-					//if err == utils.TimeOut {
-					//	log.Println(host)
-					//}
-					// 进入这里的多半是 超时
+
 					bug <- domain
 					continue
 				}

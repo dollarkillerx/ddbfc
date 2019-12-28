@@ -136,3 +136,24 @@ func ReadRowFile(file string) {
 		log.Println(scanner.Text())
 	}
 }
+
+func ReadBigFile(os io.ReadCloser) ([]byte, error) {
+	// 创建接受容器
+	db := make([]byte, 0)
+
+	// 创建读取器
+	reader := bufio.NewReader(os)
+	// 创建读取缓冲区
+	buf := make([]byte, 1024)
+	for {
+		n, e := reader.Read(buf)
+		if e != nil {
+			if e == io.EOF {
+				break
+			}
+			return nil, e
+		}
+		db = append(db, buf[:n]...)
+	}
+	return db, nil
+}
